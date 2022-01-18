@@ -50,6 +50,8 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	private final IClientConfig clientConfig;
 	private final IngredientGrid ingredientGrid;
 	private final IIngredientGridSource ingredientSource;
+	private final DrawableNineSliceTexture background;
+	private final DrawableNineSliceTexture slotBackground;
 
 	private ImmutableRect2i backgroundArea = ImmutableRect2i.EMPTY;
 	private ImmutableRect2i slotBackgroundArea = ImmutableRect2i.EMPTY;
@@ -60,7 +62,9 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		GuiScreenHelper guiScreenHelper,
 		IngredientGrid ingredientGrid,
 		IWorldConfig worldConfig,
-		IClientConfig clientConfig
+		IClientConfig clientConfig,
+		DrawableNineSliceTexture background,
+		DrawableNineSliceTexture slotBackground
 	) {
 		this.filterTextSource = filterTextSource;
 		this.worldConfig = worldConfig;
@@ -70,6 +74,8 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		this.guiScreenHelper = guiScreenHelper;
 		this.pageDelegate = new IngredientGridPaged();
 		this.navigation = new PageNavigation(this.pageDelegate, false);
+		this.background = background;
+		this.slotBackground = slotBackground;
 	}
 
 	public void updateLayout(boolean resetToFirstPage) {
@@ -143,10 +149,6 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	}
 
 	public void draw(Minecraft minecraft, PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
-		Textures textures = Internal.getTextures();
-		DrawableNineSliceTexture background = textures.getGuiBackground();
-		DrawableNineSliceTexture slotBackground = textures.getNineSliceSlot();
-
 		background.draw(poseStack, this.backgroundArea);
 		slotBackground.draw(poseStack, this.slotBackgroundArea);
 

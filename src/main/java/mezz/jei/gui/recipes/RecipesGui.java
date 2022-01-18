@@ -111,7 +111,7 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 		nextPage = new GuiIconButtonSmall(0, 0, buttonWidth, buttonHeight, arrowNext, b -> logic.nextPage());
 		previousPage = new GuiIconButtonSmall(0, 0, buttonWidth, buttonHeight, arrowPrevious, b -> logic.previousPage());
 
-		background = textures.getGuiBackground();
+		background = textures.getRecipeGuiBackground();
 	}
 
 	private static void drawCenteredStringWithShadow(PoseStack poseStack, Font font, String string, ImmutableRect2i area) {

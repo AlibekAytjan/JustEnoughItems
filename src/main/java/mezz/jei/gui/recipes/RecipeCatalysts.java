@@ -44,7 +44,7 @@ public class RecipeCatalysts implements IRecipeFocusSource {
 
 		Textures textures = Internal.getTextures();
 		backgroundTab = textures.getCatalystTab();
-		slotBackground = textures.getNineSliceSlot();
+		slotBackground = textures.getRecipeCatalystSlotBackground();
 	}
 
 	public boolean isEmpty() {
