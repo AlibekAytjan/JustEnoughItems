@@ -1,17 +1,15 @@
 package mezz.jei.render;
 
-import javax.annotation.Nullable;
-
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.ingredients.IngredientTypeHelper;
-import net.minecraft.client.renderer.Rect2i;
-
+import mezz.jei.util.ImmutableRect2i;
 import mezz.jei.util.MathUtil;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 
 public class IngredientListSlot {
-	private final Rect2i area;
+	private final ImmutableRect2i area;
 	private final int padding;
 	private boolean blocked = false;
 	@Nullable
@@ -20,7 +18,7 @@ public class IngredientListSlot {
 	public IngredientListSlot(int xPosition, int yPosition, int padding) {
 		this.padding = padding;
 		final int size = 16 + (2 * padding);
-		this.area = new Rect2i(xPosition, yPosition, size, size);
+		this.area = new ImmutableRect2i(xPosition, yPosition, size, size);
 	}
 
 	public Optional<IngredientListElementRenderer<?>> getIngredientRenderer() {
@@ -45,7 +43,7 @@ public class IngredientListSlot {
 		ingredientRenderer.setPadding(padding);
 	}
 
-	public Rect2i getArea() {
+	public ImmutableRect2i getArea() {
 		return area;
 	}
 

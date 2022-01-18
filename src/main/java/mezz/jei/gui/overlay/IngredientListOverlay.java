@@ -19,13 +19,12 @@ import mezz.jei.input.mouse.handlers.CheatInputHandler;
 import mezz.jei.input.mouse.handlers.CombinedInputHandler;
 import mezz.jei.input.mouse.handlers.NullInputHandler;
 import mezz.jei.input.mouse.handlers.ProxyInputHandler;
+import mezz.jei.util.MutableRect2i;
 import mezz.jei.util.MathUtil;
-import mezz.jei.util.Rectangle2dBuilder;
+import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.util.Tuple;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -45,7 +44,7 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 	private final GuiScreenHelper guiScreenHelper;
 	private final GuiTextFieldFilter searchField;
 	private final GhostIngredientDragManager ghostIngredientDragManager;
-	private Rect2i displayArea = new Rect2i(0, 0, 0, 0);
+	private ImmutableRect2i displayArea = ImmutableRect2i.EMPTY;
 	private boolean hasRoom;
 
 	// properties of the gui we're next to
@@ -80,14 +79,13 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		return worldConfig.isOverlayEnabled() && this.guiProperties != null && this.hasRoom;
 	}
 
-	private static Rect2i createDisplayArea(IGuiProperties guiProperties) {
-		Rect2i screenRectangle = GuiProperties.getScreenRectangle(guiProperties);
+	private static ImmutableRect2i createDisplayArea(IGuiProperties guiProperties) {
+		ImmutableRect2i screenRectangle = GuiProperties.getScreenRectangle(guiProperties);
 		int guiRight = GuiProperties.getGuiRight(guiProperties);
-		Tuple<Rect2i, Rect2i> result = MathUtil.splitX(screenRectangle, guiRight);
-		Rect2i displayArea = result.getB();
-		return new Rectangle2dBuilder(displayArea)
+		return screenRectangle.toMutable()
+			.cropLeft(guiRight)
 			.insetByPadding(BORDER_PADDING)
-			.build();
+			.toImmutable();
 	}
 
 	public void updateScreen(@Nullable Screen guiScreen, boolean exclusionAreasChanged) {
@@ -120,25 +118,31 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 
 		final boolean searchBarCentered = isSearchBarCentered(this.clientConfig, guiProperties);
 
-		Set<Rect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
-		Rect2i availableContentsArea = new Rectangle2dBuilder(this.displayArea)
-			.subtractHeight(searchBarCentered ? 0 : SEARCH_HEIGHT + BORDER_PADDING)
-			.build();
+		Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
+		ImmutableRect2i availableContentsArea;
+		if (!searchBarCentered) {
+			availableContentsArea = new MutableRect2i(this.displayArea)
+				.cropBottom(SEARCH_HEIGHT + BORDER_PADDING)
+				.toImmutable();
+		} else {
+			availableContentsArea = this.displayArea;
+		}
 		this.hasRoom = this.contents.updateBounds(availableContentsArea, guiExclusionAreas);
 
 		// update area to match contents size
-		Rect2i contentsArea = this.contents.getArea();
-		this.displayArea = new Rectangle2dBuilder(this.displayArea)
-			.setX(contentsArea)
-			.setWidth(contentsArea)
-			.build();
+		ImmutableRect2i contentsArea = this.contents.getBackgroundArea();
+		this.displayArea = this.displayArea.toMutable()
+			.matchWidthAndX(contentsArea)
+			.toImmutable();
 
-		Tuple<Rect2i, Rect2i> result = getSearchAndConfigArea(searchBarCentered, guiProperties, this.displayArea);
-		Rect2i searchAndConfigArea = result.getB();
+		ImmutableRect2i searchAndConfigArea = getSearchAndConfigArea(searchBarCentered, guiProperties, this.displayArea);
 
-		result = MathUtil.splitXRight(searchAndConfigArea, BUTTON_SIZE);
-		Rect2i searchArea = result.getA();
-		Rect2i configButtonArea = result.getB();
+		ImmutableRect2i searchArea = searchAndConfigArea.toMutable()
+			.cropRight(BUTTON_SIZE)
+			.toImmutable();
+		ImmutableRect2i configButtonArea = searchAndConfigArea.toMutable()
+			.keepRight(BUTTON_SIZE)
+			.toImmutable();
 
 		this.searchField.updateBounds(searchArea);
 		this.configButton.updateBounds(configButtonArea);
@@ -151,18 +155,17 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 			GuiProperties.getGuiBottom(guiProperties) + SEARCH_HEIGHT < guiProperties.getScreenHeight();
 	}
 
-	private static Tuple<Rect2i, Rect2i> getSearchAndConfigArea(boolean searchBarCentered, IGuiProperties guiProperties, Rect2i displayArea) {
+	private static ImmutableRect2i getSearchAndConfigArea(boolean searchBarCentered, IGuiProperties guiProperties, ImmutableRect2i displayArea) {
 		if (searchBarCentered) {
-			Rect2i guiRectangle = GuiProperties.getGuiRectangle(guiProperties);
-			Rect2i searchRect = new Rect2i(
-				guiRectangle.getX(),
-				displayArea.getHeight() - SEARCH_HEIGHT,
-				guiRectangle.getWidth(),
-				SEARCH_HEIGHT
-			);
-			return new Tuple<>(displayArea, searchRect);
+			ImmutableRect2i guiRectangle = GuiProperties.getGuiRectangle(guiProperties);
+			return displayArea.toMutable()
+				.keepBottom(SEARCH_HEIGHT)
+				.matchWidthAndX(guiRectangle)
+				.toImmutable();
 		} else {
-			return MathUtil.splitYBottom(displayArea, SEARCH_HEIGHT);
+			return displayArea.toMutable()
+				.keepBottom(SEARCH_HEIGHT)
+				.toImmutable();
 		}
 	}
 

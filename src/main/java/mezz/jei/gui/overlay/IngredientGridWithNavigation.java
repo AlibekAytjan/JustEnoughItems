@@ -1,6 +1,7 @@
 package mezz.jei.gui.overlay;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import mezz.jei.Internal;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IFilterTextSource;
@@ -8,7 +9,9 @@ import mezz.jei.config.IWorldConfig;
 import mezz.jei.config.KeyBindings;
 import mezz.jei.gui.GuiScreenHelper;
 import mezz.jei.gui.PageNavigation;
+import mezz.jei.gui.elements.DrawableNineSliceTexture;
 import mezz.jei.gui.recipes.RecipesGui;
+import mezz.jei.gui.textures.Textures;
 import mezz.jei.input.IClickedIngredient;
 import mezz.jei.input.IPaged;
 import mezz.jei.input.IRecipeFocusSource;
@@ -18,15 +21,12 @@ import mezz.jei.input.mouse.handlers.CombinedInputHandler;
 import mezz.jei.input.mouse.handlers.DeleteItemInputHandler;
 import mezz.jei.render.IngredientListElementRenderer;
 import mezz.jei.util.CommandUtil;
+import mezz.jei.util.ImmutableRect2i;
 import mezz.jei.util.MathUtil;
-import mezz.jei.util.Rectangle2dBuilder;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.util.Tuple;
-import net.minecraftforge.common.util.Size2i;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +38,8 @@ import java.util.Set;
  */
 public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	private static final int NAVIGATION_HEIGHT = 20;
+	private static final int BORDER_PADDING = 5;
+	private static final int INNER_PADDING = 2;
 
 	private int firstItemIndex = 0;
 	private final IngredientGridPaged pageDelegate;
@@ -49,7 +51,8 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	private final IngredientGrid ingredientGrid;
 	private final IIngredientGridSource ingredientSource;
 
-	private Rect2i area = new Rect2i(0, 0, 0, 0);
+	private ImmutableRect2i backgroundArea = ImmutableRect2i.EMPTY;
+	private ImmutableRect2i slotBackgroundArea = ImmutableRect2i.EMPTY;
 
 	public IngredientGridWithNavigation(
 		IIngredientGridSource ingredientSource,
@@ -82,11 +85,16 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		this.navigation.updatePageState();
 	}
 
-	public boolean updateBounds(Rect2i availableArea, Set<Rect2i> guiExclusionAreas) {
-		Tuple<Rect2i, Rect2i> result = MathUtil.splitY(availableArea, NAVIGATION_HEIGHT);
-		final Rect2i estimatedNavigationArea = result.getA();
+	public boolean updateBounds(ImmutableRect2i availableArea, Set<ImmutableRect2i> guiExclusionAreas) {
+		availableArea = availableArea.toMutable()
+			.insetByPadding(BORDER_PADDING + INNER_PADDING)
+			.toImmutable();
 
-		Collection<Rect2i> intersectsNavigationArea = guiExclusionAreas.stream()
+		final ImmutableRect2i estimatedNavigationArea = availableArea.toMutable()
+			.keepTop(NAVIGATION_HEIGHT)
+			.toImmutable();
+
+		Collection<ImmutableRect2i> intersectsNavigationArea = guiExclusionAreas.stream()
 			.filter(rectangle2d -> MathUtil.intersects(rectangle2d, estimatedNavigationArea))
 			.toList();
 
@@ -95,34 +103,53 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		if (maxWidth <= 0 || maxHeight <= 0) {
 			return false;
 		}
-		Size2i maxContentSize = new Size2i(maxWidth, maxHeight);
-		availableArea = MathUtil.cropToAvoidIntersection(intersectsNavigationArea, availableArea, maxContentSize);
-		if (MathUtil.contentArea(availableArea, maxContentSize) == 0) {
+
+		availableArea = MathUtil.cropToAvoidIntersection(intersectsNavigationArea, availableArea, maxWidth, maxHeight);
+		if (MathUtil.contentArea(availableArea, maxWidth, maxHeight) == 0) {
 			return false;
 		}
 
-		result = MathUtil.splitY(availableArea, NAVIGATION_HEIGHT);
-		Rect2i navigationArea = result.getA();
-		Rect2i boundsWithoutNavigation = result.getB();
+		ImmutableRect2i boundsWithoutNavigation = availableArea.toMutable()
+			.cropTop(NAVIGATION_HEIGHT + INNER_PADDING)
+			.insetByPadding(INNER_PADDING)
+			.toImmutable();
+
 		boolean gridHasRoom = this.ingredientGrid.updateBounds(boundsWithoutNavigation, guiExclusionAreas);
 		if (!gridHasRoom) {
 			return false;
 		}
-		Rect2i displayArea = this.ingredientGrid.getArea();
-		navigationArea = new Rectangle2dBuilder(navigationArea)
-			.setX(displayArea)
-			.setWidth(displayArea)
-			.build();
+
+		this.slotBackgroundArea = this.ingredientGrid.getArea()
+			.toMutable()
+			.expandByPadding(INNER_PADDING)
+			.toImmutable();
+
+		ImmutableRect2i navigationArea = availableArea.toMutable()
+			.keepTop(NAVIGATION_HEIGHT)
+			.matchWidthAndX(this.slotBackgroundArea)
+			.toImmutable();
 		this.navigation.updateBounds(navigationArea);
-		this.area = MathUtil.union(displayArea, navigationArea);
+
+		this.backgroundArea = MathUtil.union(this.slotBackgroundArea, navigationArea)
+			.toMutable()
+			.expandByPadding(BORDER_PADDING)
+			.toImmutable();
+
 		return true;
 	}
 
-	public Rect2i getArea() {
-		return this.area;
+	public ImmutableRect2i getBackgroundArea() {
+		return this.backgroundArea;
 	}
 
 	public void draw(Minecraft minecraft, PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
+		Textures textures = Internal.getTextures();
+		DrawableNineSliceTexture background = textures.getGuiBackground();
+		DrawableNineSliceTexture slotBackground = textures.getNineSliceSlot();
+
+		background.draw(poseStack, this.backgroundArea);
+		slotBackground.draw(poseStack, this.slotBackgroundArea);
+
 		this.ingredientGrid.draw(minecraft, poseStack, mouseX, mouseY);
 		this.navigation.draw(minecraft, poseStack, mouseX, mouseY, partialTicks);
 	}
@@ -132,7 +159,7 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	}
 
 	public boolean isMouseOver(double mouseX, double mouseY) {
-		return MathUtil.contains(this.area, mouseX, mouseY) &&
+		return MathUtil.contains(this.backgroundArea, mouseX, mouseY) &&
 			!guiScreenHelper.isInGuiExclusionArea(mouseX, mouseY);
 	}
 

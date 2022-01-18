@@ -17,9 +17,9 @@ import mezz.jei.gui.TooltipRenderer;
 import mezz.jei.ingredients.IngredientFilter;
 import mezz.jei.render.IngredientRenderHelper;
 import mezz.jei.util.ErrorUtil;
+import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -44,7 +44,7 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 	private final int slotIndex;
 	private final boolean input;
 
-	private final Rect2i rect;
+	private final ImmutableRect2i rect;
 	private final int xPadding;
 	private final int yPadding;
 
@@ -64,7 +64,7 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 		boolean input,
 		IIngredientRenderer<T> ingredientRenderer,
 		IIngredientHelper<T> ingredientHelper,
-		Rect2i rect,
+		ImmutableRect2i rect,
 		int xPadding, int yPadding,
 		int cycleOffset
 	) {
@@ -86,7 +86,7 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 		return ingredientHelper.getIngredientType();
 	}
 
-	public Rect2i getRect() {
+	public ImmutableRect2i getRect() {
 		return rect;
 	}
 

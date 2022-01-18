@@ -9,9 +9,9 @@ import mezz.jei.input.IRecipeFocusSource;
 import mezz.jei.input.mouse.IUserInputHandler;
 import mezz.jei.input.mouse.handlers.NullInputHandler;
 import mezz.jei.input.mouse.handlers.ProxyInputHandler;
+import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Rect2i;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -24,7 +24,7 @@ public class LeftAreaDispatcher implements IRecipeFocusSource {
 	private final GuiScreenHelper guiScreenHelper;
 	@Nullable
 	private IGuiProperties guiProperties;
-	private Rect2i displayArea = new Rect2i(0, 0, 0, 0);
+	private ImmutableRect2i displayArea = ImmutableRect2i.EMPTY;
 	private boolean canShow = false;
 
 	public LeftAreaDispatcher(GuiScreenHelper guiScreenHelper, ILeftAreaContent contents) {
@@ -51,7 +51,7 @@ public class LeftAreaDispatcher implements IRecipeFocusSource {
 			guiProperties = null;
 		} else {
 			if (forceUpdate || !GuiProperties.areEqual(guiProperties, currentGuiProperties)) {
-				Set<Rect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
+				Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
 				guiProperties = currentGuiProperties;
 				makeDisplayArea(guiProperties);
 				contents.updateBounds(displayArea, guiExclusionAreas);
@@ -65,7 +65,11 @@ public class LeftAreaDispatcher implements IRecipeFocusSource {
 		final int y = BORDER_PADDING;
 		int width = guiProperties.getGuiLeft() - x - BORDER_PADDING;
 		final int height = guiProperties.getScreenHeight() - y - BORDER_PADDING;
-		displayArea = new Rect2i(x, y, width, height);
+		if (width <= 0 || height <= 0) {
+			displayArea = ImmutableRect2i.EMPTY;
+		} else {
+			displayArea = new ImmutableRect2i(x, y, width, height);
+		}
 	}
 
 	@Override

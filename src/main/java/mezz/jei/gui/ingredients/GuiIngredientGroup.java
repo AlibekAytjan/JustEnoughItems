@@ -1,19 +1,6 @@
 package mezz.jei.gui.ingredients;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import net.minecraft.client.renderer.Rect2i;
-
 import mezz.jei.Internal;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IGuiIngredientGroup;
@@ -26,8 +13,19 @@ import mezz.jei.api.recipe.IFocus;
 import mezz.jei.gui.Focus;
 import mezz.jei.ingredients.IngredientManager;
 import mezz.jei.util.ErrorUtil;
+import mezz.jei.util.ImmutableRect2i;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -65,7 +63,7 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 
 	@Override
 	public void init(int slotIndex, boolean input, IIngredientRenderer<T> ingredientRenderer, int xPosition, int yPosition, int width, int height, int xPadding, int yPadding) {
-		Rect2i rect = new Rect2i(xPosition, yPosition, width, height);
+		ImmutableRect2i rect = new ImmutableRect2i(xPosition, yPosition, width, height);
 		GuiIngredient<T> guiIngredient = new GuiIngredient<>(slotIndex, input, ingredientRenderer, ingredientHelper, rect, xPadding, yPadding, cycleOffset);
 		guiIngredients.put(slotIndex, guiIngredient);
 		if (input) {

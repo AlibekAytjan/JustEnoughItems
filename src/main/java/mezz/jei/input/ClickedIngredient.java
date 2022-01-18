@@ -1,21 +1,19 @@
 package mezz.jei.input;
 
-import javax.annotation.Nullable;
-
-import mezz.jei.api.ingredients.subtypes.UidContext;
-import mezz.jei.gui.ingredients.GuiIngredient;
-import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.world.item.ItemStack;
-
 import com.google.common.base.MoreObjects;
 import mezz.jei.Internal;
 import mezz.jei.api.ingredients.IIngredientHelper;
+import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.runtime.IIngredientManager;
+import mezz.jei.gui.ingredients.GuiIngredient;
 import mezz.jei.ingredients.IngredientManager;
 import mezz.jei.util.ErrorUtil;
+import mezz.jei.util.ImmutableRect2i;
+import net.minecraft.world.item.ItemStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 
 public class ClickedIngredient<V> implements IClickedIngredient<V> {
@@ -23,7 +21,7 @@ public class ClickedIngredient<V> implements IClickedIngredient<V> {
 
 	private final V value;
 	@Nullable
-	private final Rect2i area;
+	private final ImmutableRect2i area;
 	private final boolean canSetFocusWithMouse;
 	private final boolean allowsCheating;
 
@@ -35,7 +33,7 @@ public class ClickedIngredient<V> implements IClickedIngredient<V> {
 		return create(displayedIngredient, guiIngredient.getRect(), allowsCheating, canSetFocusWithMouse);
 	}
 
-	public static <V> Optional<IClickedIngredient<? extends V>> create(V value, @Nullable Rect2i area, boolean allowsCheating, boolean canSetFocusWithMouse) {
+	public static <V> Optional<IClickedIngredient<? extends V>> create(V value, @Nullable ImmutableRect2i area, boolean allowsCheating, boolean canSetFocusWithMouse) {
 		ErrorUtil.checkNotNull(value, "value");
 		IngredientManager ingredientManager = Internal.getIngredientManager();
 		IIngredientHelper<V> ingredientHelper = ingredientManager.getIngredientHelper(value);
@@ -53,7 +51,7 @@ public class ClickedIngredient<V> implements IClickedIngredient<V> {
 		return Optional.empty();
 	}
 
-	private ClickedIngredient(V value, @Nullable Rect2i area, boolean allowsCheating, boolean canSetFocusWithMouse) {
+	private ClickedIngredient(V value, @Nullable ImmutableRect2i area, boolean allowsCheating, boolean canSetFocusWithMouse) {
 		this.value = value;
 		this.area = area;
 		this.allowsCheating = allowsCheating;
@@ -67,7 +65,7 @@ public class ClickedIngredient<V> implements IClickedIngredient<V> {
 
 	@Nullable
 	@Override
-	public Rect2i getArea() {
+	public ImmutableRect2i getArea() {
 		return area;
 	}
 

@@ -1,7 +1,7 @@
 package mezz.jei.gui.recipes;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.Internal;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
@@ -22,16 +22,16 @@ import mezz.jei.ingredients.IngredientTypeHelper;
 import mezz.jei.ingredients.Ingredients;
 import mezz.jei.input.UserInput;
 import mezz.jei.util.ErrorUtil;
+import mezz.jei.util.ImmutableRect2i;
 import mezz.jei.util.MathUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.fluids.FluidStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -223,7 +223,7 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 	@Override
 	public boolean isMouseOver(double mouseX, double mouseY) {
 		final IDrawable background = recipeCategory.getBackground();
-		final Rect2i backgroundRect = new Rect2i(posX, posY, background.getWidth(), background.getHeight());
+		final ImmutableRect2i backgroundRect = new ImmutableRect2i(posX, posY, background.getWidth(), background.getHeight());
 		return MathUtil.contains(backgroundRect, mouseX, mouseY) ||
 			(recipeTransferButton != null && recipeTransferButton.isMouseOver(mouseX, mouseY));
 	}

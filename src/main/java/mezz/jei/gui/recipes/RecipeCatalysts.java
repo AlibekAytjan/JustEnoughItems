@@ -1,16 +1,7 @@
 package mezz.jei.gui.recipes;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.renderer.Rect2i;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.Internal;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.IIngredientRenderer;
@@ -21,7 +12,14 @@ import mezz.jei.ingredients.IngredientManager;
 import mezz.jei.input.ClickedIngredient;
 import mezz.jei.input.IClickedIngredient;
 import mezz.jei.input.IRecipeFocusSource;
+import mezz.jei.util.ImmutableRect2i;
 import mezz.jei.util.MathUtil;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * The area drawn on left side of the {@link RecipesGui} that shows which items can craft the current recipe category.
@@ -61,7 +59,7 @@ public class RecipeCatalysts implements IRecipeFocusSource {
 		this.ingredients.clear();
 
 		if (!ingredients.isEmpty()) {
-			Rect2i recipeArea = recipesGui.getArea();
+			ImmutableRect2i recipeArea = recipesGui.getArea();
 			int availableHeight = recipeArea.getHeight() - 8;
 			int borderHeight = (2 * borderSize) + (2 * ingredientBorderSize);
 			int maxIngredientsPerColumn = (availableHeight - borderHeight) / ingredientSize;
@@ -87,7 +85,7 @@ public class RecipeCatalysts implements IRecipeFocusSource {
 		IIngredientHelper<T> ingredientHelper = ingredientManager.getIngredientHelper(ingredient);
 		int column = index / maxIngredientsPerColumn;
 		int row = index % maxIngredientsPerColumn;
-		Rect2i rect = new Rect2i(
+		ImmutableRect2i rect = new ImmutableRect2i(
 			left + borderSize + (column * ingredientSize) + ingredientBorderSize,
 			top + borderSize + (row * ingredientSize) + ingredientBorderSize,
 			ingredientSize,

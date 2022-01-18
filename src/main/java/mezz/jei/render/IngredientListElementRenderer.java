@@ -1,19 +1,19 @@
 package mezz.jei.render;
 
-import net.minecraft.client.renderer.Rect2i;
+import mezz.jei.util.ImmutableRect2i;
 
 public class IngredientListElementRenderer<T> {
-	private static final Rect2i DEFAULT_AREA = new Rect2i(0, 0, 16, 16);
+	private static final ImmutableRect2i DEFAULT_AREA = new ImmutableRect2i(0, 0, 16, 16);
 
 	private final T ingredient;
-	private Rect2i area = DEFAULT_AREA;
+	private ImmutableRect2i area = DEFAULT_AREA;
 	private int padding;
 
 	public IngredientListElementRenderer(T ingredient) {
 		this.ingredient = ingredient;
 	}
 
-	public void setArea(Rect2i area) {
+	public void setArea(ImmutableRect2i area) {
 		this.area = area;
 	}
 
@@ -25,7 +25,7 @@ public class IngredientListElementRenderer<T> {
 		return ingredient;
 	}
 
-	public Rect2i getArea() {
+	public ImmutableRect2i getArea() {
 		return area;
 	}
 

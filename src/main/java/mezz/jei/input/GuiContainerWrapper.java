@@ -1,10 +1,10 @@
 package mezz.jei.input;
 
 import mezz.jei.gui.GuiScreenHelper;
+import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -29,7 +29,7 @@ public class GuiContainerWrapper implements IRecipeFocusSource {
 				if (slotUnderMouse != null) {
 					ItemStack stack = slotUnderMouse.getItem();
 					if (!stack.isEmpty()) {
-						Rect2i slotArea = new Rect2i(slotUnderMouse.x, slotUnderMouse.y, 16, 16);
+						ImmutableRect2i slotArea = new ImmutableRect2i(slotUnderMouse.x, slotUnderMouse.y, 16, 16);
 						return ClickedIngredient.create(stack, slotArea, false, false);
 					}
 				}

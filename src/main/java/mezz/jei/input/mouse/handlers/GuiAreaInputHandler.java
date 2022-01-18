@@ -1,17 +1,15 @@
 package mezz.jei.input.mouse.handlers;
 
-import mezz.jei.api.gui.handlers.IGuiClickableArea;
 import mezz.jei.config.KeyBindings;
 import mezz.jei.gui.Focus;
 import mezz.jei.gui.GuiScreenHelper;
 import mezz.jei.gui.recipes.RecipesGui;
 import mezz.jei.input.UserInput;
 import mezz.jei.input.mouse.IUserInputHandler;
-import mezz.jei.util.MathUtil;
-import mezz.jei.util.Rectangle2dBuilder;
+import mezz.jei.util.ImmutableRect2i;
+import mezz.jei.util.MutableRect2i;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.Rect2i;
 
 import java.util.Optional;
 
@@ -36,10 +34,9 @@ public class GuiAreaInputHandler implements IUserInputHandler {
 							clickableArea.onClick(Focus::new, recipesGui);
 						}
 
-						Rect2i screenArea = new Rectangle2dBuilder(clickableArea.getArea())
-							.addX(guiContainer.getGuiLeft())
-							.addY(guiContainer.getGuiTop())
-							.build();
+						ImmutableRect2i screenArea = new MutableRect2i(clickableArea.getArea())
+							.addOffset(guiContainer.getGuiLeft(), guiContainer.getGuiTop())
+							.toImmutable();
 						return LimitedAreaInputHandler.create(this, screenArea);
 					});
 			}

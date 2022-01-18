@@ -7,17 +7,17 @@ import mezz.jei.bookmarks.BookmarkList;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IWorldConfig;
 import mezz.jei.gui.elements.GuiIconToggleButton;
-import mezz.jei.input.mouse.handlers.CheatInputHandler;
 import mezz.jei.gui.overlay.IngredientGrid;
 import mezz.jei.gui.overlay.IngredientGridWithNavigation;
 import mezz.jei.gui.textures.Textures;
 import mezz.jei.input.IClickedIngredient;
 import mezz.jei.input.IRecipeFocusSource;
 import mezz.jei.input.mouse.IUserInputHandler;
+import mezz.jei.input.mouse.handlers.CheatInputHandler;
 import mezz.jei.input.mouse.handlers.CombinedInputHandler;
 import mezz.jei.input.mouse.handlers.ProxyInputHandler;
+import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.Rect2i;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -25,9 +25,10 @@ import java.util.Set;
 
 public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IBookmarkOverlay {
 	private static final int BUTTON_SIZE = 20;
+	private static final int MIN_NAVIGATION_WIDTH = 4 * BUTTON_SIZE;
 
 	// areas
-	private Rect2i parentArea = new Rect2i(0, 0, 0, 0);
+	private ImmutableRect2i parentArea = ImmutableRect2i.EMPTY;
 
 	// display elements
 	private final IngredientGridWithNavigation contents;
@@ -62,7 +63,7 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 	}
 
 	@Override
-	public void updateBounds(Rect2i area, Set<Rect2i> guiExclusionAreas) {
+	public void updateBounds(ImmutableRect2i area, Set<ImmutableRect2i> guiExclusionAreas) {
 		this.parentArea = area;
 		hasRoom = updateBounds(guiExclusionAreas);
 	}
@@ -84,40 +85,29 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 	}
 
 	private static int getMinWidth(IClientConfig clientConfig) {
-		return Math.max(4 * BUTTON_SIZE, clientConfig.getMinColumns() * IngredientGrid.INGREDIENT_WIDTH);
+		int minIngredientsWidth = clientConfig.getMinColumns() * IngredientGrid.INGREDIENT_WIDTH;
+		return Math.max(MIN_NAVIGATION_WIDTH, minIngredientsWidth);
 	}
 
-	public boolean updateBounds(Set<Rect2i> guiExclusionAreas) {
-		Rect2i displayArea = parentArea;
-
+	public boolean updateBounds(Set<ImmutableRect2i> guiExclusionAreas) {
 		final int minWidth = getMinWidth(this.clientConfig);
-		if (displayArea.getWidth() < minWidth) {
+		if (parentArea.getWidth() < minWidth) {
 			return false;
 		}
 
-		Rect2i availableContentsArea = new Rect2i(
-			displayArea.getX(),
-			displayArea.getY(),
-			displayArea.getWidth(),
-			displayArea.getHeight() - (BUTTON_SIZE + 4)
-		);
+		ImmutableRect2i availableContentsArea = parentArea.toMutable()
+			.cropBottom(BUTTON_SIZE)
+			.toImmutable();
 		boolean contentsHasRoom = this.contents.updateBounds(availableContentsArea, guiExclusionAreas);
 
-		// update area to match contents size
-		Rect2i contentsArea = this.contents.getArea();
-		displayArea = new Rect2i(
-			contentsArea.getX(),
-			displayArea.getY(),
-			contentsArea.getWidth(),
-			displayArea.getHeight()
-		);
+		ImmutableRect2i contentsArea = this.contents.getBackgroundArea();
 
-		this.bookmarkButton.updateBounds(new Rect2i(
-			displayArea.getX(),
-			displayArea.getY() + displayArea.getHeight() - BUTTON_SIZE - 2,
-			BUTTON_SIZE,
-			BUTTON_SIZE
-		));
+		ImmutableRect2i bookmarkButtonArea = parentArea.toMutable()
+			.matchWidthAndX(contentsArea)
+			.keepBottom(BUTTON_SIZE)
+			.keepLeft(BUTTON_SIZE)
+			.toImmutable();
+		this.bookmarkButton.updateBounds(bookmarkButtonArea);
 
 		this.contents.updateLayout(false);
 

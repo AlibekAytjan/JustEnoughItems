@@ -20,8 +20,8 @@ import mezz.jei.gui.GuiScreenHelper;
 import mezz.jei.gui.TooltipRenderer;
 import mezz.jei.gui.ingredients.GuiIngredientProperties;
 import mezz.jei.gui.recipes.RecipesGui;
-import mezz.jei.ingredients.IngredientManager;
 import mezz.jei.ingredients.IngredientInfo;
+import mezz.jei.ingredients.IngredientManager;
 import mezz.jei.input.ClickedIngredient;
 import mezz.jei.input.IClickedIngredient;
 import mezz.jei.input.IRecipeFocusSource;
@@ -31,13 +31,13 @@ import mezz.jei.render.IngredientListElementRenderer;
 import mezz.jei.render.IngredientListSlot;
 import mezz.jei.render.IngredientRenderHelper;
 import mezz.jei.util.GiveMode;
+import mezz.jei.util.ImmutableRect2i;
 import mezz.jei.util.MathUtil;
 import mezz.jei.util.StringUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.TextComponent;
@@ -64,7 +64,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 	private final IModIdHelper modIdHelper;
 	private final GuiScreenHelper guiScreenHelper;
 
-	private Rect2i area = new Rect2i(0, 0, 0, 0);
+	private ImmutableRect2i area = ImmutableRect2i.EMPTY;
 	protected final IngredientListBatchRenderer guiIngredientSlots;
 	private final IIngredientFilterConfig ingredientFilterConfig;
 	private final IClientConfig clientConfig;
@@ -103,7 +103,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 		return Math.max(ingredientsWidth, minWidth);
 	}
 
-	public boolean updateBounds(Rect2i availableArea, Collection<Rect2i> exclusionAreas) {
+	public boolean updateBounds(ImmutableRect2i availableArea, Collection<ImmutableRect2i> exclusionAreas) {
 		final int columns = Math.min(availableArea.getWidth() / INGREDIENT_WIDTH, this.clientConfig.getMaxColumns());
 		final int rows = availableArea.getHeight() / INGREDIENT_HEIGHT;
 
@@ -117,10 +117,10 @@ public class IngredientGrid implements IRecipeFocusSource {
 		} else {
 			x = availableArea.getX();
 		}
-		final int y = availableArea.getY() + (availableArea.getHeight() - height) / 2;
+		final int y = availableArea.getY();// + (availableArea.getHeight() - height) / 2;
 		final int xOffset = x + Math.max(0, (width - ingredientsWidth) / 2);
 
-		this.area = new Rect2i(x, y, width, height);
+		this.area = new ImmutableRect2i(x, y, width, height);
 		this.guiIngredientSlots.clear();
 
 		if (rows == 0 || columns < this.clientConfig.getMinColumns()) {
@@ -132,7 +132,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 			for (int column = 0; column < columns; column++) {
 				int x1 = xOffset + (column * INGREDIENT_WIDTH);
 				IngredientListSlot ingredientListSlot = new IngredientListSlot(x1, y1, INGREDIENT_PADDING);
-				Rect2i stackArea = ingredientListSlot.getArea();
+				ImmutableRect2i stackArea = ingredientListSlot.getArea();
 				final boolean blocked = MathUtil.intersects(exclusionAreas, stackArea);
 				ingredientListSlot.setBlocked(blocked);
 				this.guiIngredientSlots.add(ingredientListSlot);
@@ -141,7 +141,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 		return true;
 	}
 
-	public Rect2i getArea() {
+	public ImmutableRect2i getArea() {
 		return area;
 	}
 
@@ -160,7 +160,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 	/**
 	 * Matches the highlight code in {@link AbstractContainerScreen#renderSlotHighlight(PoseStack, int, int, int)} but with a custom area width and height
 	 */
-	public static void drawHighlight(PoseStack poseStack, Rect2i area) {
+	public static void drawHighlight(PoseStack poseStack, ImmutableRect2i area) {
 		RenderSystem.disableDepthTest();
 		RenderSystem.colorMask(true, true, true, false);
 		GuiComponent.fill(poseStack, area.getX(), area.getY(), area.getX() + area.getWidth(), area.getY() + area.getHeight(), 0x80FFFFFF);
