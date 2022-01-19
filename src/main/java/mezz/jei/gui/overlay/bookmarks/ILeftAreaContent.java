@@ -16,7 +16,7 @@ public interface ILeftAreaContent extends IRecipeFocusSource {
 
 	void drawTooltips(Minecraft minecraft, PoseStack poseStack, int mouseX, int mouseY);
 
-	void updateBounds(ImmutableRect2i area, Set<ImmutableRect2i> guiExclusionAreas);
+	boolean updateBounds(ImmutableRect2i area, Set<ImmutableRect2i> guiExclusionAreas);
 
 	IUserInputHandler createInputHandler();
 }

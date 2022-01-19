@@ -1,7 +1,6 @@
 package mezz.jei.gui.overlay;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import mezz.jei.Internal;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IFilterTextSource;
@@ -11,7 +10,6 @@ import mezz.jei.gui.GuiScreenHelper;
 import mezz.jei.gui.PageNavigation;
 import mezz.jei.gui.elements.DrawableNineSliceTexture;
 import mezz.jei.gui.recipes.RecipesGui;
-import mezz.jei.gui.textures.Textures;
 import mezz.jei.input.IClickedIngredient;
 import mezz.jei.input.IPaged;
 import mezz.jei.input.IRecipeFocusSource;
@@ -104,11 +102,14 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 			.filter(rectangle2d -> MathUtil.intersects(rectangle2d, estimatedNavigationArea))
 			.toList();
 
-		final int maxWidth = this.ingredientGrid.maxWidth();
-		final int maxHeight = availableArea.getHeight();
-		if (maxWidth <= 0 || maxHeight <= 0) {
+		if (availableArea.getWidth() < this.ingredientGrid.minWidth() ||
+			availableArea.getHeight() < this.ingredientGrid.minHeight())
+		{
 			return false;
 		}
+
+		final int maxWidth = Math.min(availableArea.getWidth(), this.ingredientGrid.maxWidth());
+		final int maxHeight = Math.min(availableArea.getHeight(), this.ingredientGrid.maxHeight());
 
 		availableArea = MathUtil.cropToAvoidIntersection(intersectsNavigationArea, availableArea, maxWidth, maxHeight);
 		if (MathUtil.contentArea(availableArea, maxWidth, maxHeight) == 0) {
@@ -130,9 +131,9 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 			.expandByPadding(INNER_PADDING)
 			.toImmutable();
 
-		ImmutableRect2i navigationArea = availableArea.toMutable()
+		ImmutableRect2i navigationArea = this.slotBackgroundArea.toMutable()
 			.keepTop(NAVIGATION_HEIGHT)
-			.matchWidthAndX(this.slotBackgroundArea)
+			.moveUp(NAVIGATION_HEIGHT + INNER_PADDING)
 			.toImmutable();
 		this.navigation.updateBounds(navigationArea);
 

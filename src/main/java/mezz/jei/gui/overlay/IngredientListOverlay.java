@@ -19,7 +19,6 @@ import mezz.jei.input.mouse.handlers.CheatInputHandler;
 import mezz.jei.input.mouse.handlers.CombinedInputHandler;
 import mezz.jei.input.mouse.handlers.NullInputHandler;
 import mezz.jei.input.mouse.handlers.ProxyInputHandler;
-import mezz.jei.util.MutableRect2i;
 import mezz.jei.util.MathUtil;
 import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.client.Minecraft;
@@ -121,7 +120,7 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
 		ImmutableRect2i availableContentsArea;
 		if (!searchBarCentered) {
-			availableContentsArea = new MutableRect2i(this.displayArea)
+			availableContentsArea = this.displayArea.toMutable()
 				.cropBottom(SEARCH_HEIGHT + BORDER_PADDING)
 				.toImmutable();
 		} else {
@@ -130,7 +129,7 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		this.hasRoom = this.contents.updateBounds(availableContentsArea, guiExclusionAreas);
 
 		// update area to match contents size
-		ImmutableRect2i contentsArea = this.contents.getBackgroundArea();
+		ImmutableRect2i contentsArea = this.hasRoom ? this.contents.getBackgroundArea() : availableContentsArea;
 		this.displayArea = this.displayArea.toMutable()
 			.matchWidthAndX(contentsArea)
 			.toImmutable();

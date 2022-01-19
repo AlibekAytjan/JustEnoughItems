@@ -1,0 +1,13 @@
+package mezz.jei.config;
+
+import mezz.jei.gui.overlay.HorizontalAlignment;
+import mezz.jei.gui.overlay.VerticalAlignment;
+
+public interface IIngredientGridConfig {
+	int getMaxColumns();
+	int getMinColumns();
+	int getMaxRows();
+	int getMinRows();
+	HorizontalAlignment getHorizontalAlignment();
+	VerticalAlignment getVerticalAlignment();
+}

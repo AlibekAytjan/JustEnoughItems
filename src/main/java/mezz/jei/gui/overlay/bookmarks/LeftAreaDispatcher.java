@@ -10,6 +10,7 @@ import mezz.jei.input.mouse.IUserInputHandler;
 import mezz.jei.input.mouse.handlers.NullInputHandler;
 import mezz.jei.input.mouse.handlers.ProxyInputHandler;
 import mezz.jei.util.ImmutableRect2i;
+import mezz.jei.util.MutableRect2i;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -24,7 +25,6 @@ public class LeftAreaDispatcher implements IRecipeFocusSource {
 	private final GuiScreenHelper guiScreenHelper;
 	@Nullable
 	private IGuiProperties guiProperties;
-	private ImmutableRect2i displayArea = ImmutableRect2i.EMPTY;
 	private boolean canShow = false;
 
 	public LeftAreaDispatcher(GuiScreenHelper guiScreenHelper, ILeftAreaContent contents) {
@@ -53,23 +53,22 @@ public class LeftAreaDispatcher implements IRecipeFocusSource {
 			if (forceUpdate || !GuiProperties.areEqual(guiProperties, currentGuiProperties)) {
 				Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
 				guiProperties = currentGuiProperties;
-				makeDisplayArea(guiProperties);
-				contents.updateBounds(displayArea, guiExclusionAreas);
+				canShow = makeDisplayArea(guiProperties)
+					.map(displayArea -> {
+						contents.updateBounds(displayArea, guiExclusionAreas);
+						return true;
+					})
+					.orElse(false);
+			} else {
+				canShow = true;
 			}
-			canShow = true;
 		}
 	}
 
-	private void makeDisplayArea(IGuiProperties guiProperties) {
-		final int x = BORDER_PADDING;
-		final int y = BORDER_PADDING;
-		int width = guiProperties.getGuiLeft() - x - BORDER_PADDING;
-		final int height = guiProperties.getScreenHeight() - y - BORDER_PADDING;
-		if (width <= 0 || height <= 0) {
-			displayArea = ImmutableRect2i.EMPTY;
-		} else {
-			displayArea = new ImmutableRect2i(x, y, width, height);
-		}
+	private static Optional<ImmutableRect2i> makeDisplayArea(IGuiProperties guiProperties) {
+		return new MutableRect2i(0, 0, guiProperties.getGuiLeft(), guiProperties.getScreenHeight())
+			.insetByPadding(BORDER_PADDING)
+			.toImmutableSafe();
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package mezz.jei.config;
 
 import mezz.jei.api.constants.ModIds;
 import mezz.jei.events.EventBusHelper;
+import mezz.jei.gui.overlay.HorizontalAlignment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.MutableComponent;
@@ -26,6 +27,8 @@ public class JEIClientConfig {
 	public static final ClientConfig clientConfig = new ClientConfig(builder);
 	public static final IngredientFilterConfig filterConfig = new IngredientFilterConfig(builder);
 	public static final ModIdFormattingConfig modNameFormat = new ModIdFormattingConfig(builder);
+	public static final IngredientGridConfig ingredientListConfig = new IngredientGridConfig("IngredientList", builder, HorizontalAlignment.RIGHT);
+	public static final IngredientGridConfig bookmarkListConfig = new IngredientGridConfig("BookmarkList", builder, HorizontalAlignment.LEFT);
 
 	private static final ForgeConfigSpec config = builder.build();
 
@@ -42,7 +45,6 @@ public class JEIClientConfig {
 		}
 
 		clientConfig.reload();
-		filterConfig.reload();
 		modNameFormat.reload();
 	}
 

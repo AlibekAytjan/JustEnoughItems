@@ -3,12 +3,15 @@ package mezz.jei.gui.overlay;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Preconditions;
+import mezz.jei.plugins.vanilla.RecipeBookGuiHandler;
 import mezz.jei.util.ImmutableRect2i;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import mezz.jei.api.gui.handlers.IGuiProperties;
 import mezz.jei.gui.recipes.RecipesGui;
+import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
+import net.minecraft.client.renderer.Rect2i;
 
 public class GuiProperties implements IGuiProperties {
 	private final Class<? extends Screen> screenClass;
@@ -24,17 +27,27 @@ public class GuiProperties implements IGuiProperties {
 		if (containerScreen.width <= 0 || containerScreen.height <= 0) {
 			return null;
 		}
-		int xSize = containerScreen.getXSize();
-		int ySize = containerScreen.getYSize();
-		if (xSize <= 0 || ySize <= 0) {
+		int x = containerScreen.getGuiLeft();
+		int y = containerScreen.getGuiTop();
+		int width = containerScreen.getXSize();
+		int height = containerScreen.getYSize();
+		if (containerScreen instanceof RecipeUpdateListener r) {
+			Rect2i bookArea = RecipeBookGuiHandler.getBookArea(r);
+			if (bookArea != null) {
+				width += (x - bookArea.getX());
+				x = bookArea.getX();
+			}
+		}
+
+		if (width <= 0 || height <= 0) {
 			return null;
 		}
 		return new GuiProperties(
 			containerScreen.getClass(),
-			containerScreen.getGuiLeft(),
-			containerScreen.getGuiTop(),
-			xSize,
-			ySize,
+			x,
+			y,
+			width,
+			height,
 			containerScreen.width,
 			containerScreen.height
 		);

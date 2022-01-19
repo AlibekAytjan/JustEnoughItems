@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import net.minecraft.client.renderer.Rect2i;
 
 import javax.annotation.Nonnegative;
+import java.util.Optional;
 
 @SuppressWarnings("ConstantConditions")
 public class MutableRect2i {
@@ -77,9 +78,6 @@ public class MutableRect2i {
 	}
 
 	public MutableRect2i insetByPadding(@Nonnegative int padding) {
-		Preconditions.checkArgument(padding * 2 <= this.height, "padding * 2 must not be greater than the height");
-		Preconditions.checkArgument(padding * 2 <= this.width, "padding * 2 must not be greater than the width");
-
 		this.x += padding;
 		this.y += padding;
 		this.width -= padding * 2;
@@ -96,68 +94,56 @@ public class MutableRect2i {
 	}
 
 	public MutableRect2i cropRight(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-		Preconditions.checkArgument(amount <= this.width, "amount must not be greater than the width");
-
 		this.width -= amount;
 		return this;
 	}
 
 	public MutableRect2i cropLeft(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-		Preconditions.checkArgument(amount <= this.width, "amount must not be greater than the width");
-
 		this.x += amount;
 		this.width -= amount;
 		return this;
 	}
 
 	public MutableRect2i cropBottom(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-		Preconditions.checkArgument(amount <= this.height, "amount must not be greater than the height");
-
 		this.height -= amount;
 		return this;
 	}
 
 	public MutableRect2i cropTop(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-		Preconditions.checkArgument(amount <= this.height, "amount must not be greater than the height");
-
 		this.y += amount;
 		this.height -= amount;
 		return this;
 	}
 
 	public MutableRect2i keepTop(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-
 		this.height = amount;
 		return this;
 	}
 
 	public MutableRect2i keepBottom(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-
 		int cropAmount = this.height - amount;
 		return cropTop(cropAmount);
 	}
 
 	public MutableRect2i keepRight(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-
 		int cropAmount = this.width - amount;
 		return cropLeft(cropAmount);
 	}
 
 	public MutableRect2i keepLeft(@Nonnegative int amount) {
-		Preconditions.checkArgument(amount >= 0, "amount must be greater or equal to than 0");
-
 		this.width = amount;
 		return this;
 	}
 
 	public ImmutableRect2i toImmutable() {
 		return new ImmutableRect2i(x, y, width, height);
+	}
+
+	public Optional<ImmutableRect2i> toImmutableSafe() {
+		if (x < 0 || y < 0 || width < 0 || height < 0) {
+			return Optional.empty();
+		}
+		ImmutableRect2i rect = new ImmutableRect2i(x, y, width, height);
+		return Optional.of(rect);
 	}
 }

@@ -7,7 +7,6 @@ import mezz.jei.bookmarks.BookmarkList;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IWorldConfig;
 import mezz.jei.gui.elements.GuiIconToggleButton;
-import mezz.jei.gui.overlay.IngredientGrid;
 import mezz.jei.gui.overlay.IngredientGridWithNavigation;
 import mezz.jei.gui.textures.Textures;
 import mezz.jei.input.IClickedIngredient;
@@ -63,9 +62,10 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 	}
 
 	@Override
-	public void updateBounds(ImmutableRect2i area, Set<ImmutableRect2i> guiExclusionAreas) {
+	public boolean updateBounds(ImmutableRect2i area, Set<ImmutableRect2i> guiExclusionAreas) {
 		this.parentArea = area;
 		hasRoom = updateBounds(guiExclusionAreas);
+		return hasRoom;
 	}
 
 	@Override
@@ -84,17 +84,7 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 		bookmarkButton.drawTooltips(poseStack, mouseX, mouseY);
 	}
 
-	private static int getMinWidth(IClientConfig clientConfig) {
-		int minIngredientsWidth = clientConfig.getMinColumns() * IngredientGrid.INGREDIENT_WIDTH;
-		return Math.max(MIN_NAVIGATION_WIDTH, minIngredientsWidth);
-	}
-
 	public boolean updateBounds(Set<ImmutableRect2i> guiExclusionAreas) {
-		final int minWidth = getMinWidth(this.clientConfig);
-		if (parentArea.getWidth() < minWidth) {
-			return false;
-		}
-
 		ImmutableRect2i availableContentsArea = parentArea.toMutable()
 			.cropBottom(BUTTON_SIZE)
 			.toImmutable();
@@ -109,8 +99,9 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 			.toImmutable();
 		this.bookmarkButton.updateBounds(bookmarkButtonArea);
 
-		this.contents.updateLayout(false);
-
+		if (contentsHasRoom) {
+			this.contents.updateLayout(false);
+		}
 		return contentsHasRoom;
 	}
 

@@ -13,6 +13,7 @@ import mezz.jei.config.Constants;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IEditModeConfig;
 import mezz.jei.config.IIngredientFilterConfig;
+import mezz.jei.config.IIngredientGridConfig;
 import mezz.jei.config.IWorldConfig;
 import mezz.jei.config.KeyBindings;
 import mezz.jei.config.SearchMode;
@@ -58,8 +59,9 @@ public class IngredientGrid implements IRecipeFocusSource {
 	private static final int INGREDIENT_PADDING = 1;
 	public static final int INGREDIENT_WIDTH = GuiIngredientProperties.getWidth(INGREDIENT_PADDING);
 	public static final int INGREDIENT_HEIGHT = GuiIngredientProperties.getHeight(INGREDIENT_PADDING);
+
 	private final IngredientManager ingredientManager;
-	private final GridAlignment alignment;
+	private final IIngredientGridConfig gridConfig;
 	private final RecipesGui recipesGui;
 	private final IModIdHelper modIdHelper;
 	private final GuiScreenHelper guiScreenHelper;
@@ -72,7 +74,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 
 	public IngredientGrid(
 		IngredientManager ingredientManager,
-		GridAlignment alignment,
+		IIngredientGridConfig gridConfig,
 		IEditModeConfig editModeConfig,
 		IIngredientFilterConfig ingredientFilterConfig,
 		IClientConfig clientConfig,
@@ -82,7 +84,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 		IModIdHelper modIdHelper
 	) {
 		this.ingredientManager = ingredientManager;
-		this.alignment = alignment;
+		this.gridConfig = gridConfig;
 		this.recipesGui = recipesGui;
 		this.modIdHelper = modIdHelper;
 		this.guiIngredientSlots = new IngredientListBatchRenderer(clientConfig, editModeConfig, worldConfig, ingredientManager);
@@ -97,35 +99,49 @@ public class IngredientGrid implements IRecipeFocusSource {
 	}
 
 	public int maxWidth() {
-		final int columns = this.clientConfig.getMaxColumns();
+		final int columns = this.gridConfig.getMaxColumns();
 		final int ingredientsWidth = columns * INGREDIENT_WIDTH;
-		final int minWidth = this.clientConfig.getMinColumns() * INGREDIENT_WIDTH;
+		final int minWidth = minWidth();
 		return Math.max(ingredientsWidth, minWidth);
 	}
 
+	public int maxHeight() {
+		final int rows = this.gridConfig.getMaxRows();
+		final int ingredientsHeight = rows * INGREDIENT_HEIGHT;
+		final int minHeight = minHeight();
+		return Math.max(ingredientsHeight, minHeight);
+	}
+
+	public int minWidth() {
+		return this.gridConfig.getMinColumns() * INGREDIENT_WIDTH;
+	}
+
+	public int minHeight() {
+		return this.gridConfig.getMinRows() * INGREDIENT_HEIGHT;
+	}
+
 	public boolean updateBounds(ImmutableRect2i availableArea, Collection<ImmutableRect2i> exclusionAreas) {
-		final int columns = Math.min(availableArea.getWidth() / INGREDIENT_WIDTH, this.clientConfig.getMaxColumns());
-		final int rows = availableArea.getHeight() / INGREDIENT_HEIGHT;
+		final int columns = Math.min(availableArea.getWidth() / INGREDIENT_WIDTH, this.gridConfig.getMaxColumns());
+		final int rows = Math.min(availableArea.getHeight() / INGREDIENT_HEIGHT, this.gridConfig.getMaxRows());
 
 		final int ingredientsWidth = columns * INGREDIENT_WIDTH;
-		final int minWidth = this.clientConfig.getMinColumns() * INGREDIENT_WIDTH;
+		final int minWidth = minWidth();
 		final int width = Math.max(ingredientsWidth, minWidth);
 		final int height = rows * INGREDIENT_HEIGHT;
-		final int x;
-		if (alignment == GridAlignment.LEFT) {
-			x = availableArea.getX() + (availableArea.getWidth() - width);
-		} else {
-			x = availableArea.getX();
-		}
-		final int y = availableArea.getY();// + (availableArea.getHeight() - height) / 2;
+		final int x = switch (gridConfig.getHorizontalAlignment()) {
+			case LEFT -> availableArea.getX();
+			case CENTER -> availableArea.getX() + ((availableArea.getWidth() - width) / 2);
+			case RIGHT -> availableArea.getX() + (availableArea.getWidth() - width);
+		};
+		final int y = switch (gridConfig.getVerticalAlignment()) {
+			case TOP -> availableArea.getY();
+			case CENTER -> availableArea.getY() + ((availableArea.getHeight() - height) / 2);
+			case BOTTOM -> availableArea.getY() + (availableArea.getHeight() - height);
+		};
 		final int xOffset = x + Math.max(0, (width - ingredientsWidth) / 2);
 
 		this.area = new ImmutableRect2i(x, y, width, height);
 		this.guiIngredientSlots.clear();
-
-		if (rows == 0 || columns < this.clientConfig.getMinColumns()) {
-			return false;
-		}
 
 		for (int row = 0; row < rows; row++) {
 			int y1 = y + (row * INGREDIENT_HEIGHT);
@@ -138,7 +154,8 @@ public class IngredientGrid implements IRecipeFocusSource {
 				this.guiIngredientSlots.add(ingredientListSlot);
 			}
 		}
-		return true;
+
+		return rows >= gridConfig.getMinRows() && columns >= gridConfig.getMinColumns();
 	}
 
 	public ImmutableRect2i getArea() {

@@ -9,13 +9,11 @@ import mezz.jei.config.BookmarkConfig;
 import mezz.jei.config.EditModeConfig;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IEditModeConfig;
-import mezz.jei.config.IngredientFilterConfig;
 import mezz.jei.config.JEIClientConfig;
 import mezz.jei.config.KeyBindings;
-import mezz.jei.config.ModIdFormattingConfig;
+import mezz.jei.config.WorldConfig;
 import mezz.jei.config.sorting.IngredientTypeSortingConfig;
 import mezz.jei.config.sorting.ModNameSortingConfig;
-import mezz.jei.config.WorldConfig;
 import mezz.jei.config.sorting.RecipeCategorySortingConfig;
 import mezz.jei.events.EventBusHelper;
 import mezz.jei.events.PlayerJoinedWorldEvent;
@@ -44,10 +42,7 @@ public class ClientLifecycleHandler {
 
 	final JeiStarter starter = new JeiStarter();
 	final Textures textures;
-	final IClientConfig clientConfig;
 	final BookmarkConfig bookmarkConfig;
-	final ModIdFormattingConfig modIdFormattingConfig;
-	final IngredientFilterConfig ingredientFilterConfig;
 	final WorldConfig worldConfig;
 	final IModIdHelper modIdHelper;
 	final IEditModeConfig editModeConfig;
@@ -68,10 +63,8 @@ public class ClientLifecycleHandler {
 			}
 		}
 
-		this.clientConfig = JEIClientConfig.clientConfig;
-		this.ingredientFilterConfig = JEIClientConfig.filterConfig;
-		this.modIdFormattingConfig = JEIClientConfig.modNameFormat;
-		this.modIdHelper = new ForgeModIdHelper(clientConfig, modIdFormattingConfig);
+		IClientConfig clientConfig = JEIClientConfig.clientConfig;
+		this.modIdHelper = new ForgeModIdHelper(clientConfig, JEIClientConfig.modNameFormat);
 
 		// Additional config files
 		bookmarkConfig = new BookmarkConfig(jeiConfigurationDir);
@@ -118,7 +111,7 @@ public class ClientLifecycleHandler {
 	public void setupJEI() {
 		worldConfig.syncWorldConfig(jeiConfigurationDir);
 
-		modIdFormattingConfig.checkForModNameFormatOverride();
+		JEIClientConfig.modNameFormat.checkForModNameFormatOverride();
 
 		startJEI();
 		EventBusHelper.post(new PlayerJoinedWorldEvent());
@@ -134,14 +127,16 @@ public class ClientLifecycleHandler {
 		starter.start(
 			plugins,
 			textures,
-			clientConfig,
+			JEIClientConfig.clientConfig,
 			editModeConfig,
-			ingredientFilterConfig,
+			JEIClientConfig.filterConfig,
 			worldConfig,
 			bookmarkConfig,
 			modIdHelper,
 			recipeCategorySortingConfig,
-			ingredientSorter
+			ingredientSorter,
+			JEIClientConfig.ingredientListConfig,
+			JEIClientConfig.bookmarkListConfig
 		);
 	}
 
