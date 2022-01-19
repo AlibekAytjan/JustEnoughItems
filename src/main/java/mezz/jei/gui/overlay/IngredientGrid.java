@@ -101,33 +101,37 @@ public class IngredientGrid implements IRecipeFocusSource {
 	public int maxWidth() {
 		final int columns = this.gridConfig.getMaxColumns();
 		final int ingredientsWidth = columns * INGREDIENT_WIDTH;
-		final int minWidth = minWidth();
+		final int minWidth = minWidth(this.gridConfig);
 		return Math.max(ingredientsWidth, minWidth);
 	}
 
 	public int maxHeight() {
 		final int rows = this.gridConfig.getMaxRows();
 		final int ingredientsHeight = rows * INGREDIENT_HEIGHT;
-		final int minHeight = minHeight();
+		final int minHeight = minHeight(this.gridConfig);
 		return Math.max(ingredientsHeight, minHeight);
 	}
 
-	public int minWidth() {
-		return this.gridConfig.getMinColumns() * INGREDIENT_WIDTH;
+	public static int minWidth(IIngredientGridConfig gridConfig) {
+		return gridConfig.getMinColumns() * INGREDIENT_WIDTH;
 	}
 
-	public int minHeight() {
-		return this.gridConfig.getMinRows() * INGREDIENT_HEIGHT;
+	public static int minHeight(IIngredientGridConfig gridConfig) {
+		return gridConfig.getMinRows() * INGREDIENT_HEIGHT;
 	}
 
-	public boolean updateBounds(ImmutableRect2i availableArea, Collection<ImmutableRect2i> exclusionAreas) {
-		final int columns = Math.min(availableArea.getWidth() / INGREDIENT_WIDTH, this.gridConfig.getMaxColumns());
-		final int rows = Math.min(availableArea.getHeight() / INGREDIENT_HEIGHT, this.gridConfig.getMaxRows());
+	private static Dimensions getDimensions(ImmutableRect2i availableArea, IIngredientGridConfig gridConfig) {
+		final int columns = Math.min(availableArea.getWidth() / INGREDIENT_WIDTH, gridConfig.getMaxColumns());
+		final int rows = Math.min(availableArea.getHeight() / INGREDIENT_HEIGHT, gridConfig.getMaxRows());
+		return new Dimensions(rows, columns);
+	}
 
-		final int ingredientsWidth = columns * INGREDIENT_WIDTH;
-		final int minWidth = minWidth();
+	private static ImmutableRect2i calculateArea(final ImmutableRect2i availableArea, IIngredientGridConfig gridConfig) {
+		final Dimensions dimensions = getDimensions(availableArea, gridConfig);
+		final int ingredientsWidth = dimensions.columns * INGREDIENT_WIDTH;
+		final int minWidth = minWidth(gridConfig);
 		final int width = Math.max(ingredientsWidth, minWidth);
-		final int height = rows * INGREDIENT_HEIGHT;
+		final int height = dimensions.rows * INGREDIENT_HEIGHT;
 		final int x = switch (gridConfig.getHorizontalAlignment()) {
 			case LEFT -> availableArea.getX();
 			case CENTER -> availableArea.getX() + ((availableArea.getWidth() - width) / 2);
@@ -138,15 +142,25 @@ public class IngredientGrid implements IRecipeFocusSource {
 			case CENTER -> availableArea.getY() + ((availableArea.getHeight() - height) / 2);
 			case BOTTOM -> availableArea.getY() + (availableArea.getHeight() - height);
 		};
-		final int xOffset = x + Math.max(0, (width - ingredientsWidth) / 2);
 
-		this.area = new ImmutableRect2i(x, y, width, height);
+		return new ImmutableRect2i(x, y, width, height);
+	}
+
+	public boolean updateBounds(ImmutableRect2i availableArea, Collection<ImmutableRect2i> exclusionAreas) {
 		this.guiIngredientSlots.clear();
 
-		for (int row = 0; row < rows; row++) {
-			int y1 = y + (row * INGREDIENT_HEIGHT);
-			for (int column = 0; column < columns; column++) {
-				int x1 = xOffset + (column * INGREDIENT_WIDTH);
+		Dimensions dimensions = getDimensions(availableArea, this.gridConfig);
+		if (dimensions.rows < gridConfig.getMinRows() || dimensions.columns < gridConfig.getMinColumns()) {
+			this.area = ImmutableRect2i.EMPTY;
+			return false;
+		}
+
+		this.area = calculateArea(availableArea, this.gridConfig);
+
+		for (int row = 0; row < dimensions.rows; row++) {
+			int y1 = this.area.getY() + (row * INGREDIENT_HEIGHT);
+			for (int column = 0; column < dimensions.columns; column++) {
+				int x1 = this.area.getX() + (column * INGREDIENT_WIDTH);
 				IngredientListSlot ingredientListSlot = new IngredientListSlot(x1, y1, INGREDIENT_PADDING);
 				ImmutableRect2i stackArea = ingredientListSlot.getArea();
 				final boolean blocked = MathUtil.intersects(exclusionAreas, stackArea);
@@ -155,7 +169,7 @@ public class IngredientGrid implements IRecipeFocusSource {
 			}
 		}
 
-		return rows >= gridConfig.getMinRows() && columns >= gridConfig.getMinColumns();
+		return true;
 	}
 
 	public ImmutableRect2i getArea() {

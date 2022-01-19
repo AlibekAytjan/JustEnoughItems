@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IFilterTextSource;
+import mezz.jei.config.IIngredientGridConfig;
 import mezz.jei.config.IWorldConfig;
 import mezz.jei.config.KeyBindings;
 import mezz.jei.gui.GuiScreenHelper;
@@ -36,6 +37,7 @@ import java.util.Set;
  */
 public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	private static final int NAVIGATION_HEIGHT = 20;
+	private static final int SCREEN_EDGE_PADDING = 7;
 	private static final int BORDER_PADDING = 5;
 	private static final int INNER_PADDING = 2;
 
@@ -43,6 +45,7 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 	private final IngredientGridPaged pageDelegate;
 	private final PageNavigation navigation;
 	private final GuiScreenHelper guiScreenHelper;
+	private final IIngredientGridConfig gridConfig;
 	private final IFilterTextSource filterTextSource;
 	private final IWorldConfig worldConfig;
 	private final IClientConfig clientConfig;
@@ -61,6 +64,7 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		IngredientGrid ingredientGrid,
 		IWorldConfig worldConfig,
 		IClientConfig clientConfig,
+		IIngredientGridConfig gridConfig,
 		DrawableNineSliceTexture background,
 		DrawableNineSliceTexture slotBackground
 	) {
@@ -70,6 +74,7 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		this.ingredientGrid = ingredientGrid;
 		this.ingredientSource = ingredientSource;
 		this.guiScreenHelper = guiScreenHelper;
+		this.gridConfig = gridConfig;
 		this.pageDelegate = new IngredientGridPaged();
 		this.navigation = new PageNavigation(this.pageDelegate, false);
 		this.background = background;
@@ -86,42 +91,57 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 			firstItemIndex = 0;
 		}
 		this.ingredientGrid.guiIngredientSlots.set(firstItemIndex, ingredientList);
-		this.navigation.updatePageState();
+		this.navigation.updatePageNumber();
 	}
 
-	public boolean updateBounds(ImmutableRect2i availableArea, Set<ImmutableRect2i> guiExclusionAreas) {
-		availableArea = availableArea.toMutable()
-			.insetByPadding(BORDER_PADDING + INNER_PADDING)
-			.toImmutable();
+	private static ImmutableRect2i cropToAvoidNavigationArea(ImmutableRect2i availableArea, Set<ImmutableRect2i> guiExclusionAreas, int maxWidth, int maxHeight) {
+		if (guiExclusionAreas.isEmpty()) {
+			return availableArea;
+		}
 
 		final ImmutableRect2i estimatedNavigationArea = availableArea.toMutable()
-			.keepTop(NAVIGATION_HEIGHT)
+			.keepTop(NAVIGATION_HEIGHT + INNER_PADDING)
 			.toImmutable();
 
-		Collection<ImmutableRect2i> intersectsNavigationArea = guiExclusionAreas.stream()
+		final Collection<ImmutableRect2i> intersectsNavigationArea = guiExclusionAreas.stream()
 			.filter(rectangle2d -> MathUtil.intersects(rectangle2d, estimatedNavigationArea))
 			.toList();
 
-		if (availableArea.getWidth() < this.ingredientGrid.minWidth() ||
-			availableArea.getHeight() < this.ingredientGrid.minHeight())
-		{
-			return false;
+		if (intersectsNavigationArea.isEmpty()) {
+			return availableArea;
 		}
 
-		final int maxWidth = Math.min(availableArea.getWidth(), this.ingredientGrid.maxWidth());
-		final int maxHeight = Math.min(availableArea.getHeight(), this.ingredientGrid.maxHeight());
+		return MathUtil.cropToAvoidIntersection(intersectsNavigationArea, availableArea, maxWidth, maxHeight);
+	}
 
-		availableArea = MathUtil.cropToAvoidIntersection(intersectsNavigationArea, availableArea, maxWidth, maxHeight);
-		if (MathUtil.contentArea(availableArea, maxWidth, maxHeight) == 0) {
-			return false;
+	private boolean updateGridBounds(final ImmutableRect2i availableArea, Set<ImmutableRect2i> guiExclusionAreas, boolean navigationEnabled) {
+		final ImmutableRect2i gridArea;
+		if (navigationEnabled) {
+			gridArea = cropToAvoidNavigationArea(availableArea, guiExclusionAreas, this.ingredientGrid.maxWidth(), this.ingredientGrid.maxHeight())
+				.toMutable()
+				.insetByPadding(SCREEN_EDGE_PADDING)
+				.cropTop(NAVIGATION_HEIGHT + INNER_PADDING)
+				.insetByPadding(INNER_PADDING)
+				.toImmutable();
+		} else {
+			gridArea = availableArea.toMutable()
+				.insetByPadding(SCREEN_EDGE_PADDING)
+				.insetByPadding(INNER_PADDING)
+				.toImmutable();
 		}
+		return this.ingredientGrid.updateBounds(gridArea, guiExclusionAreas);
+	}
 
-		ImmutableRect2i boundsWithoutNavigation = availableArea.toMutable()
-			.cropTop(NAVIGATION_HEIGHT + INNER_PADDING)
-			.insetByPadding(INNER_PADDING)
-			.toImmutable();
-
-		boolean gridHasRoom = this.ingredientGrid.updateBounds(boundsWithoutNavigation, guiExclusionAreas);
+	public boolean updateBounds(final ImmutableRect2i availableArea, Set<ImmutableRect2i> guiExclusionAreas) {
+		final boolean navigationEnabled =
+			switch (this.gridConfig.getButtonNavigationVisibility()) {
+				case ENABLED -> true;
+				case DISABLED -> false;
+				case AUTO_HIDE ->
+					updateGridBounds(availableArea, guiExclusionAreas, false) &&
+						this.pageDelegate.getPageCount() > 1;
+			};
+		final boolean gridHasRoom = updateGridBounds(availableArea, guiExclusionAreas, navigationEnabled);
 		if (!gridHasRoom) {
 			return false;
 		}
@@ -131,10 +151,13 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 			.expandByPadding(INNER_PADDING)
 			.toImmutable();
 
-		ImmutableRect2i navigationArea = this.slotBackgroundArea.toMutable()
-			.keepTop(NAVIGATION_HEIGHT)
-			.moveUp(NAVIGATION_HEIGHT + INNER_PADDING)
-			.toImmutable();
+		ImmutableRect2i navigationArea = ImmutableRect2i.EMPTY;
+		if (navigationEnabled) {
+			navigationArea = this.slotBackgroundArea.toMutable()
+				.keepTop(NAVIGATION_HEIGHT)
+				.moveUp(NAVIGATION_HEIGHT + INNER_PADDING)
+				.toImmutable();
+		}
 		this.navigation.updateBounds(navigationArea);
 
 		this.backgroundArea = MathUtil.union(this.slotBackgroundArea, navigationArea)

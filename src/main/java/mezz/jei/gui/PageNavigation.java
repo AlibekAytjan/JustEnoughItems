@@ -20,8 +20,6 @@ public class PageNavigation {
 	private final GuiIconButton backButton;
 	private final boolean hideOnSinglePage;
 	private String pageNumDisplayString = "1/1";
-	private int pageNumDisplayX;
-	private int pageNumDisplayY;
 	private ImmutableRect2i area = ImmutableRect2i.EMPTY;
 
 	public PageNavigation(IPaged paged, boolean hideOnSinglePage) {
@@ -30,6 +28,13 @@ public class PageNavigation {
 		this.nextButton = new GuiIconButton(textures.getArrowNext(), b -> paged.nextPage());
 		this.backButton = new GuiIconButton(textures.getArrowPrevious(), b -> paged.previousPage());
 		this.hideOnSinglePage = hideOnSinglePage;
+	}
+
+	private boolean isVisible() {
+		if (area.isEmpty()) {
+			return false;
+		}
+		return !hideOnSinglePage || this.paged.hasNext() || this.paged.hasPrevious();
 	}
 
 	public void updateBounds(ImmutableRect2i area) {
@@ -47,19 +52,14 @@ public class PageNavigation {
 		this.nextButton.updateBounds(nextArea);
 	}
 
-	public void updatePageState() {
+	public void updatePageNumber() {
 		int pageNum = this.paged.getPageNumber();
 		int pageCount = this.paged.getPageCount();
-		Minecraft minecraft = Minecraft.getInstance();
-		Font fontRenderer = minecraft.font;
-		this.pageNumDisplayString = (pageNum + 1) + "/" + pageCount;
-		ImmutableRect2i centerArea = MathUtil.centerTextArea(this.area, fontRenderer, this.pageNumDisplayString);
-		this.pageNumDisplayX = centerArea.getX();
-		this.pageNumDisplayY = centerArea.getY();
+		this.pageNumDisplayString = String.format("%d/%d", pageNum + 1, pageCount);
 	}
 
 	public void draw(Minecraft minecraft, PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
-		if (!hideOnSinglePage || this.paged.hasNext() || this.paged.hasPrevious()) {
+		if (isVisible()) {
 			GuiComponent.fill(poseStack,
 				backButton.x + backButton.getWidth(),
 				backButton.y,
@@ -67,7 +67,9 @@ public class PageNavigation {
 				nextButton.y + nextButton.getHeight(),
 				0x30000000);
 
-			minecraft.font.drawShadow(poseStack, pageNumDisplayString, pageNumDisplayX, pageNumDisplayY, 0xFFFFFFFF);
+			Font font = minecraft.font;
+			ImmutableRect2i centerArea = MathUtil.centerTextArea(this.area, font, this.pageNumDisplayString);
+			font.drawShadow(poseStack, pageNumDisplayString, centerArea.getX(), centerArea.getY(), 0xFFFFFFFF);
 			nextButton.render(poseStack, mouseX, mouseY, partialTicks);
 			backButton.render(poseStack, mouseX, mouseY, partialTicks);
 		}

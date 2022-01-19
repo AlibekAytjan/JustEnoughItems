@@ -104,7 +104,7 @@ public class RecipeGuiTabs implements IPaged {
 		inputHandlers.add(this.pageNavigation.createInputHandler());
 		this.inputHandler = new CombinedInputHandler(inputHandlers);
 
-		pageNavigation.updatePageState();
+		pageNavigation.updatePageNumber();
 	}
 
 	public void draw(Minecraft minecraft, PoseStack poseStack, int mouseX, int mouseY) {

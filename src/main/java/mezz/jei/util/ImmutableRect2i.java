@@ -54,6 +54,10 @@ public class ImmutableRect2i {
 		return height;
 	}
 
+	public boolean isEmpty() {
+		return width == 0 && height == 0;
+	}
+
 	public MutableRect2i toMutable() {
 		return new MutableRect2i(this);
 	}

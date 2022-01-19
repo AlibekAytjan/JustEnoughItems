@@ -6,6 +6,7 @@ import mezz.jei.api.runtime.IBookmarkOverlay;
 import mezz.jei.bookmarks.BookmarkList;
 import mezz.jei.config.IClientConfig;
 import mezz.jei.config.IWorldConfig;
+import mezz.jei.gui.GuiScreenHelper;
 import mezz.jei.gui.elements.GuiIconToggleButton;
 import mezz.jei.gui.overlay.IngredientGridWithNavigation;
 import mezz.jei.gui.textures.Textures;
@@ -24,7 +25,6 @@ import java.util.Set;
 
 public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IBookmarkOverlay {
 	private static final int BUTTON_SIZE = 20;
-	private static final int MIN_NAVIGATION_WIDTH = 4 * BUTTON_SIZE;
 
 	// areas
 	private ImmutableRect2i parentArea = ImmutableRect2i.EMPTY;
@@ -41,7 +41,14 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 	private final IClientConfig clientConfig;
 	private final IWorldConfig worldConfig;
 
-	public BookmarkOverlay(BookmarkList bookmarkList, Textures textures, IngredientGridWithNavigation contents, IClientConfig clientConfig, IWorldConfig worldConfig) {
+	public BookmarkOverlay(
+		BookmarkList bookmarkList,
+		Textures textures,
+		IngredientGridWithNavigation contents,
+		IClientConfig clientConfig,
+		IWorldConfig worldConfig,
+		GuiScreenHelper guiScreenHelper
+	) {
 		this.bookmarkList = bookmarkList;
 		this.clientConfig = clientConfig;
 		this.worldConfig = worldConfig;
@@ -49,7 +56,8 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 		this.contents = contents;
 		bookmarkList.addListener(() -> {
 			worldConfig.setBookmarkEnabled(!bookmarkList.isEmpty());
-			contents.updateLayout(false);
+			Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
+			this.hasRoom = updateBounds(guiExclusionAreas);
 		});
 	}
 

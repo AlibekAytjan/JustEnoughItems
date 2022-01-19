@@ -1,6 +1,7 @@
 package mezz.jei.config;
 
 import mezz.jei.gui.overlay.HorizontalAlignment;
+import mezz.jei.gui.overlay.NavigationVisibility;
 import mezz.jei.gui.overlay.VerticalAlignment;
 import net.minecraftforge.common.ForgeConfigSpec;
 
@@ -17,6 +18,7 @@ public class IngredientGridConfig implements IIngredientGridConfig {
 	private final ForgeConfigSpec.IntValue maxColumns;
 	private final ForgeConfigSpec.EnumValue<HorizontalAlignment> horizontalAlignment;
 	private final ForgeConfigSpec.EnumValue<VerticalAlignment> verticalAlignment;
+	private final ForgeConfigSpec.EnumValue<NavigationVisibility> buttonNavigationVisibility;
 
 	public IngredientGridConfig(String categoryName, ForgeConfigSpec.Builder builder, HorizontalAlignment defaultHorizontalAlignment) {
 		builder.push(categoryName);
@@ -32,6 +34,9 @@ public class IngredientGridConfig implements IIngredientGridConfig {
 
 			builder.comment("Horizontal alignment of the ingredient grid inside the available area");
 			verticalAlignment = builder.defineEnum("VerticalAlignment", VerticalAlignment.TOP);
+
+			builder.comment("Visibility of the top page buttons. Use AUTO_HIDE to only show it when there are multiple pages.");
+			buttonNavigationVisibility = builder.defineEnum("ButtonNavigationVisibility", NavigationVisibility.ENABLED);
 		}
 		builder.pop();
 	}
@@ -64,5 +69,10 @@ public class IngredientGridConfig implements IIngredientGridConfig {
 	@Override
 	public int getMaxRows() {
 		return maxRows.get();
+	}
+
+	@Override
+	public NavigationVisibility getButtonNavigationVisibility() {
+		return buttonNavigationVisibility.get();
 	}
 }

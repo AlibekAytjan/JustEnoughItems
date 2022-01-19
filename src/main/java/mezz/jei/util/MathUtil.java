@@ -57,7 +57,10 @@ public final class MathUtil {
 	 * Tries cropping "comparisonArea" in 4 different directions to get out of the way of "areas".
 	 * Returns the largest resulting area after the crop, to find the "best" way of getting out of the way.
 	 */
-	public static ImmutableRect2i cropToAvoidIntersection(Collection<ImmutableRect2i> areas, ImmutableRect2i comparisonArea, int maxWidth, int maxHeight) {
+	public static ImmutableRect2i cropToAvoidIntersection(Collection<ImmutableRect2i> areas, ImmutableRect2i comparisonArea, int availableWidth, int availableHeight) {
+		final int maxWidth = Math.min(comparisonArea.getWidth(), availableWidth);
+		final int maxHeight = Math.min(comparisonArea.getHeight(), availableHeight);
+
 		return areas.stream()
 			.filter(rectangle2d -> intersects(rectangle2d, comparisonArea))
 			.sorted(Comparator.comparingInt(r -> contentArea(r, maxWidth, maxHeight)))
@@ -82,9 +85,6 @@ public final class MathUtil {
 	 */
 	@Nonnegative
 	public static int contentArea(ImmutableRect2i rect, int maxWidth, int maxHeight) {
-		if (rect.getWidth() <= 0 || rect.getHeight() <= 0) {
-			return 0;
-		}
 		return Math.min(rect.getWidth(), maxWidth) * Math.min(rect.getHeight(), maxHeight);
 	}
 
@@ -166,6 +166,12 @@ public final class MathUtil {
 	}
 
 	public static ImmutableRect2i union(ImmutableRect2i rect1, ImmutableRect2i rect2) {
+		if (rect1.isEmpty()) {
+			return rect2;
+		}
+		if (rect2.isEmpty()) {
+			return rect1;
+		}
 		long tx2 = rect1.getWidth();
 		long ty2 = rect1.getHeight();
 		long rx2 = rect2.getWidth();

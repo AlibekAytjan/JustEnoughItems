@@ -62,13 +62,18 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		this.contents = contents;
 		this.clientConfig = clientConfig;
 		this.worldConfig = worldConfig;
-		ingredientGridSource.addListener(() -> onSetFilterText(worldConfig.getFilterText()));
+
 		this.searchField = new GuiTextFieldFilter(ingredientGridSource);
 		this.searchField.setResponder(text -> {
 			if (this.worldConfig.setFilterText(text)) {
-				updateLayout(true);
+				updateBounds(true);
 			}
 		});
+		ingredientGridSource.addListener(() -> {
+			this.searchField.setValue(worldConfig.getFilterText());
+			updateBounds(true);
+		});
+
 		this.configButton = ConfigButton.create(this, worldConfig);
 		this.ghostIngredientDragManager = new GhostIngredientDragManager(this.contents, guiScreenHelper, ingredientManager, worldConfig);
 		this.searchField.setFocused(false);
@@ -114,39 +119,33 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		if (guiPropertiesChanged) {
 			this.ghostIngredientDragManager.stopDrag();
 		}
+		updateBounds(false);
+	}
 
-		final boolean searchBarCentered = isSearchBarCentered(this.clientConfig, guiProperties);
-
-		Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
-		ImmutableRect2i availableContentsArea;
-		if (!searchBarCentered) {
-			availableContentsArea = this.displayArea.toMutable()
-				.cropBottom(SEARCH_HEIGHT + BORDER_PADDING)
-				.toImmutable();
-		} else {
-			availableContentsArea = this.displayArea;
+	private void updateBounds(boolean filterChanged) {
+		if (this.guiProperties == null) {
+			return;
 		}
+		final boolean searchBarCentered = isSearchBarCentered(this.clientConfig, this.guiProperties);
+
+		final ImmutableRect2i availableContentsArea = getAvailableContentsArea(searchBarCentered);
+		final Set<ImmutableRect2i> guiExclusionAreas = guiScreenHelper.getGuiExclusionAreas();
 		this.hasRoom = this.contents.updateBounds(availableContentsArea, guiExclusionAreas);
 
-		// update area to match contents size
-		ImmutableRect2i contentsArea = this.hasRoom ? this.contents.getBackgroundArea() : availableContentsArea;
-		this.displayArea = this.displayArea.toMutable()
-			.matchWidthAndX(contentsArea)
-			.toImmutable();
-
-		ImmutableRect2i searchAndConfigArea = getSearchAndConfigArea(searchBarCentered, guiProperties, this.displayArea);
-
-		ImmutableRect2i searchArea = searchAndConfigArea.toMutable()
+		final ImmutableRect2i searchAndConfigArea = getSearchAndConfigArea(searchBarCentered, guiProperties);
+		final ImmutableRect2i searchArea = searchAndConfigArea.toMutable()
 			.cropRight(BUTTON_SIZE)
 			.toImmutable();
-		ImmutableRect2i configButtonArea = searchAndConfigArea.toMutable()
+		final ImmutableRect2i configButtonArea = searchAndConfigArea.toMutable()
 			.keepRight(BUTTON_SIZE)
 			.toImmutable();
 
 		this.searchField.updateBounds(searchArea);
 		this.configButton.updateBounds(configButtonArea);
 
-		updateLayout(false);
+		if (this.hasRoom) {
+			this.contents.updateLayout(filterChanged);
+		}
 	}
 
 	private static boolean isSearchBarCentered(IClientConfig clientConfig, IGuiProperties guiProperties) {
@@ -154,23 +153,33 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 			GuiProperties.getGuiBottom(guiProperties) + SEARCH_HEIGHT < guiProperties.getScreenHeight();
 	}
 
-	private static ImmutableRect2i getSearchAndConfigArea(boolean searchBarCentered, IGuiProperties guiProperties, ImmutableRect2i displayArea) {
+	private ImmutableRect2i getAvailableContentsArea(boolean searchBarCentered) {
+		if (searchBarCentered) {
+			return this.displayArea;
+		}
+		return this.displayArea.toMutable()
+			.cropBottom(SEARCH_HEIGHT + BORDER_PADDING)
+			.toImmutable();
+	}
+
+	private ImmutableRect2i getSearchAndConfigArea(boolean searchBarCentered, IGuiProperties guiProperties) {
 		if (searchBarCentered) {
 			ImmutableRect2i guiRectangle = GuiProperties.getGuiRectangle(guiProperties);
-			return displayArea.toMutable()
+			return this.displayArea.toMutable()
 				.keepBottom(SEARCH_HEIGHT)
 				.matchWidthAndX(guiRectangle)
 				.toImmutable();
+		} else if (this.hasRoom) {
+			final ImmutableRect2i contentsArea = this.contents.getBackgroundArea();
+			return this.displayArea.toMutable()
+				.keepBottom(SEARCH_HEIGHT)
+				.matchWidthAndX(contentsArea)
+				.toImmutable();
 		} else {
-			return displayArea.toMutable()
+			return this.displayArea.toMutable()
 				.keepBottom(SEARCH_HEIGHT)
 				.toImmutable();
 		}
-	}
-
-	public void updateLayout(boolean filterChanged) {
-		this.contents.updateLayout(filterChanged);
-		this.searchField.setValue(this.worldConfig.getFilterText());
 	}
 
 	public void drawScreen(Minecraft minecraft, PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
@@ -270,11 +279,6 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 				.orElse(null);
 		}
 		return null;
-	}
-
-	public void onSetFilterText(String filterText) {
-		this.searchField.setValue(filterText);
-		updateLayout(true);
 	}
 
 	@Override

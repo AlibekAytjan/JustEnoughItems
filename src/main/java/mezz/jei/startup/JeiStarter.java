@@ -93,7 +93,17 @@ public class JeiStarter {
 		GuiScreenHelper guiScreenHelper = pluginLoader.createGuiScreenHelper(plugins);
 		RecipesGui recipesGui = new RecipesGui(recipeManager, recipeTransferManager, modIdHelper, clientConfig);
 
-		IngredientGrid ingredientListGrid = new IngredientGrid(ingredientManager, ingredientListConfig, editModeConfig, ingredientFilterConfig, clientConfig, worldConfig, guiScreenHelper, recipesGui, modIdHelper);
+		IngredientGrid ingredientListGrid = new IngredientGrid(
+			ingredientManager,
+			ingredientListConfig,
+			editModeConfig,
+			ingredientFilterConfig,
+			clientConfig,
+			worldConfig,
+			guiScreenHelper,
+			recipesGui,
+			modIdHelper
+		);
 
 		WeakIngredientGridSource weakIngredientGridSource = new WeakIngredientGridSource(ingredientFilter);
 		IngredientGridWithNavigation ingredientListGridNavigation = new IngredientGridWithNavigation(
@@ -103,12 +113,30 @@ public class JeiStarter {
 			ingredientListGrid,
 			worldConfig,
 			clientConfig,
+			ingredientListConfig,
 			textures.getIngredientListBackground(),
 			textures.getIngredientListSlotBackground()
 		);
-		IngredientListOverlay ingredientListOverlay = new IngredientListOverlay(weakIngredientGridSource, ingredientManager, guiScreenHelper, ingredientListGridNavigation, clientConfig, worldConfig);
+		IngredientListOverlay ingredientListOverlay = new IngredientListOverlay(
+			weakIngredientGridSource,
+			ingredientManager,
+			guiScreenHelper,
+			ingredientListGridNavigation,
+			clientConfig,
+			worldConfig
+		);
 
-		IngredientGrid bookmarkListGrid = new IngredientGrid(ingredientManager, bookmarkListConfig, editModeConfig, ingredientFilterConfig, clientConfig, worldConfig, guiScreenHelper, recipesGui, modIdHelper);
+		IngredientGrid bookmarkListGrid = new IngredientGrid(
+			ingredientManager,
+			bookmarkListConfig,
+			editModeConfig,
+			ingredientFilterConfig,
+			clientConfig,
+			worldConfig,
+			guiScreenHelper,
+			recipesGui,
+			modIdHelper
+		);
 		IngredientGridWithNavigation bookmarkListGridNavigation = new IngredientGridWithNavigation(
 			bookmarkList,
 			() -> "",
@@ -116,10 +144,18 @@ public class JeiStarter {
 			bookmarkListGrid,
 			worldConfig,
 			clientConfig,
+			bookmarkListConfig,
 			textures.getBookmarkListBackground(),
 			textures.getBookmarkListSlotBackground()
 		);
-		BookmarkOverlay bookmarkOverlay = new BookmarkOverlay(bookmarkList, textures, bookmarkListGridNavigation, clientConfig, worldConfig);
+		BookmarkOverlay bookmarkOverlay = new BookmarkOverlay(
+			bookmarkList,
+			textures,
+			bookmarkListGridNavigation,
+			clientConfig,
+			worldConfig,
+			guiScreenHelper
+		);
 
 		IIngredientFilter ingredientFilterApi = new IngredientFilterApi(ingredientFilter, worldConfig);
 
