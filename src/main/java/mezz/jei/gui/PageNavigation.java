@@ -41,14 +41,10 @@ public class PageNavigation {
 		this.area = area;
 		int buttonSize = area.getHeight();
 
-		ImmutableRect2i backArea = area.toMutable()
-			.keepLeft(buttonSize)
-			.toImmutable();
+		ImmutableRect2i backArea = area.keepLeft(buttonSize);
 		this.backButton.updateBounds(backArea);
 
-		ImmutableRect2i nextArea = area.toMutable()
-			.keepRight(buttonSize)
-			.toImmutable();
+		ImmutableRect2i nextArea = area.keepRight(buttonSize);
 		this.nextButton.updateBounds(nextArea);
 	}
 

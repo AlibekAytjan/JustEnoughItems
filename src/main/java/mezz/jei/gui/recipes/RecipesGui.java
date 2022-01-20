@@ -176,10 +176,8 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 
 		this.headerHeight = (pageButtonTop + buttonHeight) - guiTop;
 		this.titleArea = MathUtil.union(previousRecipeCategory.getArea(), nextRecipeCategory.getArea())
-			.toMutable()
 			.cropLeft(previousRecipeCategory.getWidth() + innerPadding)
-			.cropRight(nextRecipeCategory.getWidth() + innerPadding)
-			.toImmutable();
+			.cropRight(nextRecipeCategory.getWidth() + innerPadding);
 
 		this.addRenderableWidget(nextRecipeCategory);
 		this.addRenderableWidget(previousRecipeCategory);
@@ -301,9 +299,7 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 	 * Converts from relative recipeLayout coordinates to absolute screen coordinates
 	 */
 	private static ImmutableRect2i absoluteClickedArea(RecipeLayout<?> recipeLayout, ImmutableRect2i area) {
-		return area.toMutable()
-			.addOffset(recipeLayout.getPosX(), recipeLayout.getPosY())
-			.toImmutable();
+		return area.addOffset(recipeLayout.getPosX(), recipeLayout.getPosY());
 	}
 
 	@Override

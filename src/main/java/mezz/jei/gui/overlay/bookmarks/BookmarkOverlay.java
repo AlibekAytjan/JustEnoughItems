@@ -93,9 +93,7 @@ public class BookmarkOverlay implements IRecipeFocusSource, ILeftAreaContent, IB
 	}
 
 	public boolean updateBounds(Set<ImmutableRect2i> guiExclusionAreas) {
-		ImmutableRect2i availableContentsArea = parentArea.toMutable()
-			.cropBottom(BUTTON_SIZE)
-			.toImmutable();
+		ImmutableRect2i availableContentsArea = parentArea.cropBottom(BUTTON_SIZE);
 		boolean contentsHasRoom = this.contents.updateBounds(availableContentsArea, guiExclusionAreas);
 
 		ImmutableRect2i contentsArea = this.contents.getBackgroundArea();

@@ -99,9 +99,7 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 			return availableArea;
 		}
 
-		final ImmutableRect2i estimatedNavigationArea = availableArea.toMutable()
-			.keepTop(NAVIGATION_HEIGHT + INNER_PADDING)
-			.toImmutable();
+		final ImmutableRect2i estimatedNavigationArea = availableArea.keepTop(NAVIGATION_HEIGHT + INNER_PADDING);
 
 		final Collection<ImmutableRect2i> intersectsNavigationArea = guiExclusionAreas.stream()
 			.filter(rectangle2d -> MathUtil.intersects(rectangle2d, estimatedNavigationArea))
@@ -124,10 +122,7 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 				.insetByPadding(INNER_PADDING)
 				.toImmutable();
 		} else {
-			gridArea = availableArea.toMutable()
-				.insetByPadding(SCREEN_EDGE_PADDING)
-				.insetByPadding(INNER_PADDING)
-				.toImmutable();
+			gridArea = availableArea.insetByPadding(SCREEN_EDGE_PADDING + INNER_PADDING);
 		}
 		return this.ingredientGrid.updateBounds(gridArea, guiExclusionAreas);
 	}
@@ -147,23 +142,18 @@ public class IngredientGridWithNavigation implements IRecipeFocusSource {
 		}
 
 		this.slotBackgroundArea = this.ingredientGrid.getArea()
-			.toMutable()
-			.expandByPadding(INNER_PADDING)
-			.toImmutable();
+			.expandByPadding(INNER_PADDING);
 
 		ImmutableRect2i navigationArea = ImmutableRect2i.EMPTY;
 		if (navigationEnabled) {
-			navigationArea = this.slotBackgroundArea.toMutable()
+			navigationArea = this.slotBackgroundArea
 				.keepTop(NAVIGATION_HEIGHT)
-				.moveUp(NAVIGATION_HEIGHT + INNER_PADDING)
-				.toImmutable();
+				.moveUp(NAVIGATION_HEIGHT + INNER_PADDING);
 		}
 		this.navigation.updateBounds(navigationArea);
 
 		this.backgroundArea = MathUtil.union(this.slotBackgroundArea, navigationArea)
-			.toMutable()
-			.expandByPadding(BORDER_PADDING)
-			.toImmutable();
+			.expandByPadding(BORDER_PADDING);
 
 		return true;
 	}

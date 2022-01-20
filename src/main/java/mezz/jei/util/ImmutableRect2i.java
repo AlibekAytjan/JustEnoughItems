@@ -58,6 +58,72 @@ public class ImmutableRect2i {
 		return width == 0 && height == 0;
 	}
 
+	public ImmutableRect2i moveRight(@Nonnegative int x) {
+		return new ImmutableRect2i(this.x + x, this.y, this.width, this.height);
+	}
+
+	public ImmutableRect2i moveLeft(@Nonnegative int x) {
+		return new ImmutableRect2i(this.x - x, this.y, this.width, this.height);
+	}
+
+	public ImmutableRect2i moveDown(@Nonnegative int y) {
+		return new ImmutableRect2i(this.x, this.y + y, this.width, this.height);
+	}
+
+	public ImmutableRect2i moveUp(@Nonnegative int y) {
+		return new ImmutableRect2i(this.x, this.y - y, this.width, this.height);
+	}
+
+	public ImmutableRect2i insetByPadding(@Nonnegative int padding) {
+		return new ImmutableRect2i(this.x + padding, this.y + padding, this.width - (padding * 2), this.height - (padding * 2));
+	}
+
+	public ImmutableRect2i expandByPadding(@Nonnegative int padding) {
+		return new ImmutableRect2i(this.x - padding, this.y - padding, this.width + (padding * 2), this.height + (padding * 2));
+	}
+
+	public ImmutableRect2i cropRight(@Nonnegative int amount) {
+		return new ImmutableRect2i(this.x, this.y, this.width - amount, this.height);
+	}
+
+	public ImmutableRect2i cropLeft(@Nonnegative int amount) {
+		return new ImmutableRect2i(this.x + amount, this.y, this.width - amount, this.height);
+	}
+
+	public ImmutableRect2i cropBottom(@Nonnegative int amount) {
+		return new ImmutableRect2i(this.x, this.y, this.width, this.height - amount);
+	}
+
+	public ImmutableRect2i cropTop(@Nonnegative int amount) {
+		return new ImmutableRect2i(this.x, this.y + amount, this.width, this.height - amount);
+	}
+
+	public ImmutableRect2i keepTop(@Nonnegative int amount) {
+		return new ImmutableRect2i(this.x, this.y, this.width, amount);
+	}
+
+	public ImmutableRect2i keepBottom(@Nonnegative int amount) {
+		int cropAmount = this.height - amount;
+		return cropTop(cropAmount);
+	}
+
+	public ImmutableRect2i keepRight(@Nonnegative int amount) {
+		int cropAmount = this.width - amount;
+		return cropLeft(cropAmount);
+	}
+
+	public ImmutableRect2i keepLeft(@Nonnegative int amount) {
+		return new ImmutableRect2i(this.x, this.y, amount, this.height);
+	}
+
+	public ImmutableRect2i addOffset(@Nonnegative int x, @Nonnegative int y) {
+		return new ImmutableRect2i(this.x + x, this.y + y, this.width, this.height);
+	}
+
+	public ImmutableRect2i matchWidthAndX(ImmutableRect2i rect) {
+		return new ImmutableRect2i(rect.getX(), this.y, rect.getWidth(), this.height);
+	}
+
 	public MutableRect2i toMutable() {
 		return new MutableRect2i(this);
 	}

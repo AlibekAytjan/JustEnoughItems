@@ -60,9 +60,7 @@ public class RecipeGuiTabs implements IPaged {
 		categoriesPerPage = Math.min(tabsArea.getWidth() / RecipeGuiTab.TAB_WIDTH, categories.size());
 		final int tabsWidth = categoriesPerPage * RecipeGuiTab.TAB_WIDTH;
 
-		this.area = tabsArea.toMutable()
-			.keepLeft(tabsWidth)
-			.toImmutable();
+		this.area = tabsArea.keepLeft(tabsWidth);
 
 		pageCount = MathUtil.divideCeil(categories.size(), categoriesPerPage);
 
@@ -70,10 +68,9 @@ public class RecipeGuiTabs implements IPaged {
 		int categoryIndex = categories.indexOf(currentCategory);
 		pageNumber = categoryIndex / categoriesPerPage;
 
-		ImmutableRect2i navigationArea = tabsArea.toMutable()
+		ImmutableRect2i navigationArea = tabsArea
 			.keepTop(NAVIGATION_HEIGHT)
-			.moveUp(2 + NAVIGATION_HEIGHT) // move up and add a little padding
-			.toImmutable();
+			.moveUp(2 + NAVIGATION_HEIGHT); // move up and add a little padding
 
 		pageNavigation.updateBounds(navigationArea);
 

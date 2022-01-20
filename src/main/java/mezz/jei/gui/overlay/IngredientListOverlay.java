@@ -86,10 +86,9 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 	private static ImmutableRect2i createDisplayArea(IGuiProperties guiProperties) {
 		ImmutableRect2i screenRectangle = GuiProperties.getScreenRectangle(guiProperties);
 		int guiRight = GuiProperties.getGuiRight(guiProperties);
-		return screenRectangle.toMutable()
+		return screenRectangle
 			.cropLeft(guiRight)
-			.insetByPadding(BORDER_PADDING)
-			.toImmutable();
+			.insetByPadding(BORDER_PADDING);
 	}
 
 	public void updateScreen(@Nullable Screen guiScreen, boolean exclusionAreasChanged) {
@@ -133,12 +132,8 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		this.hasRoom = this.contents.updateBounds(availableContentsArea, guiExclusionAreas);
 
 		final ImmutableRect2i searchAndConfigArea = getSearchAndConfigArea(searchBarCentered, guiProperties);
-		final ImmutableRect2i searchArea = searchAndConfigArea.toMutable()
-			.cropRight(BUTTON_SIZE)
-			.toImmutable();
-		final ImmutableRect2i configButtonArea = searchAndConfigArea.toMutable()
-			.keepRight(BUTTON_SIZE)
-			.toImmutable();
+		final ImmutableRect2i searchArea = searchAndConfigArea.cropRight(BUTTON_SIZE);
+		final ImmutableRect2i configButtonArea = searchAndConfigArea.keepRight(BUTTON_SIZE);
 
 		this.searchField.updateBounds(searchArea);
 		this.configButton.updateBounds(configButtonArea);
@@ -157,28 +152,22 @@ public class IngredientListOverlay implements IIngredientListOverlay, IRecipeFoc
 		if (searchBarCentered) {
 			return this.displayArea;
 		}
-		return this.displayArea.toMutable()
-			.cropBottom(SEARCH_HEIGHT + BORDER_PADDING)
-			.toImmutable();
+		return this.displayArea.cropBottom(SEARCH_HEIGHT + BORDER_PADDING);
 	}
 
 	private ImmutableRect2i getSearchAndConfigArea(boolean searchBarCentered, IGuiProperties guiProperties) {
 		if (searchBarCentered) {
 			ImmutableRect2i guiRectangle = GuiProperties.getGuiRectangle(guiProperties);
-			return this.displayArea.toMutable()
+			return this.displayArea
 				.keepBottom(SEARCH_HEIGHT)
-				.matchWidthAndX(guiRectangle)
-				.toImmutable();
+				.matchWidthAndX(guiRectangle);
 		} else if (this.hasRoom) {
 			final ImmutableRect2i contentsArea = this.contents.getBackgroundArea();
-			return this.displayArea.toMutable()
+			return this.displayArea
 				.keepBottom(SEARCH_HEIGHT)
-				.matchWidthAndX(contentsArea)
-				.toImmutable();
+				.matchWidthAndX(contentsArea);
 		} else {
-			return this.displayArea.toMutable()
-				.keepBottom(SEARCH_HEIGHT)
-				.toImmutable();
+			return this.displayArea.keepBottom(SEARCH_HEIGHT);
 		}
 	}
 
