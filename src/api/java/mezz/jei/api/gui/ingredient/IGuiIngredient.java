@@ -4,8 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.OptionalInt;
 
 import mezz.jei.api.ingredients.IIngredientType;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandler;
 import mezz.jei.api.recipe.transfer.IRecipeTransferHandlerHelper;
 
@@ -34,10 +36,26 @@ public interface IGuiIngredient<T> {
 	 */
 	List<T> getAllIngredients();
 
+
+	int getSlotIndex();
+
 	/**
-	 * Returns true if this ingredient is an input for the recipe, otherwise it is an output.
+	 * Returns the recipe ingredient index of this ingredient.
+	 * @since JEI 9.3.0
 	 */
-	boolean isInput();
+	OptionalInt getRecipeIngredientIndex();
+
+	/**
+	 * Returns the type of focus that matches this ingredient.
+	 * @since JEI 9.3.0
+	 */
+	default RecipeIngredientRole getRecipeIngredientType() {
+		if (isInput()) {
+			return RecipeIngredientRole.INPUT;
+		} else {
+			return RecipeIngredientRole.OUTPUT;
+		}
+	}
 
 	/**
 	 * Draws a highlight on background of this ingredient.
@@ -46,4 +64,11 @@ public interface IGuiIngredient<T> {
 	 * @see IRecipeTransferHandlerHelper#createUserErrorForSlots(net.minecraft.network.chat.Component, Collection).
 	 */
 	void drawHighlight(PoseStack stack, int color, int xOffset, int yOffset);
+
+	/**
+	 * Returns true if this ingredient is an input for the recipe, otherwise it is an output.
+	 * @deprecated since JEI 9.3.0. Use {@link #getRecipeIngredientType()} instead.
+	 */
+	@Deprecated
+	boolean isInput();
 }

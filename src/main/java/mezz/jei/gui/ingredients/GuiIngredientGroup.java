@@ -5,13 +5,16 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import mezz.jei.api.gui.ingredient.IGuiIngredientTooltipCallback;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.renderer.Rect2i;
 
 import mezz.jei.Internal;
@@ -33,8 +36,7 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final Map<Integer, GuiIngredient<T>> guiIngredients = new HashMap<>();
-	private final Set<Integer> inputSlots = new HashSet<>();
-	private final Set<Integer> outputSlots = new HashSet<>();
+	private final EnumMap<RecipeIngredientRole, Set<Integer>> slots = new EnumMap<>(RecipeIngredientRole.class);
 	private final IIngredientHelper<T> ingredientHelper;
 	private final IIngredientRenderer<T> ingredientRenderer;
 	private final IIngredientType<T> ingredientType;
@@ -46,12 +48,11 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 	@Nullable
 	private Focus<T> focus;
 
-	private final List<ITooltipCallback<T>> tooltipCallbacks = new ArrayList<>();
+	private final List<IGuiIngredientTooltipCallback<T>> tooltipCallbacks = new ArrayList<>();
 
-	public GuiIngredientGroup(IIngredientType<T> ingredientType, @Nullable Focus<T> focus, int cycleOffset) {
+	public GuiIngredientGroup(IIngredientType<T> ingredientType, int cycleOffset) {
 		ErrorUtil.checkNotNull(ingredientType, "ingredientType");
 		this.ingredientType = ingredientType;
-		this.focus = focus;
 		IngredientManager ingredientManager = Internal.getIngredientManager();
 		this.ingredientHelper = ingredientManager.getIngredientHelper(ingredientType);
 		this.ingredientRenderer = ingredientManager.getIngredientRenderer(ingredientType);
@@ -60,19 +61,28 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 
 	@Override
 	public void init(int slotIndex, boolean input, int xPosition, int yPosition) {
-		init(slotIndex, input, ingredientRenderer, xPosition, yPosition, 16, 16, 0, 0);
+		RecipeIngredientRole role = input ? RecipeIngredientRole.INPUT : RecipeIngredientRole.OUTPUT;
+		init(slotIndex, role, ingredientRenderer, xPosition, yPosition, 16, 16, 0, 0);
+	}
+
+	@Override
+	public void init(int slotIndex, RecipeIngredientRole role, int xPosition, int yPosition) {
+		init(slotIndex, role, ingredientRenderer, xPosition, yPosition, 16, 16, 0, 0);
 	}
 
 	@Override
 	public void init(int slotIndex, boolean input, IIngredientRenderer<T> ingredientRenderer, int xPosition, int yPosition, int width, int height, int xPadding, int yPadding) {
+		RecipeIngredientRole role = input ? RecipeIngredientRole.INPUT : RecipeIngredientRole.OUTPUT;
+		init(slotIndex, role, ingredientRenderer, xPosition, yPosition, width, height, xPadding, yPadding);
+	}
+
+	@Override
+	public void init(int slotIndex, RecipeIngredientRole role, IIngredientRenderer<T> ingredientRenderer, int xPosition, int yPosition, int width, int height, int xPadding, int yPadding) {
 		Rect2i rect = new Rect2i(xPosition, yPosition, width, height);
-		GuiIngredient<T> guiIngredient = new GuiIngredient<>(slotIndex, input, ingredientRenderer, ingredientHelper, rect, xPadding, yPadding, cycleOffset);
+		GuiIngredient<T> guiIngredient = new GuiIngredient<>(slotIndex, role, ingredientRenderer, ingredientHelper, rect, xPadding, yPadding, cycleOffset);
 		guiIngredients.put(slotIndex, guiIngredient);
-		if (input) {
-			inputSlots.add(slotIndex);
-		} else {
-			outputSlots.add(slotIndex);
-		}
+		slots.computeIfAbsent(role, key -> new IntOpenHashSet())
+			.add(slotIndex);
 	}
 
 	@Override
@@ -84,6 +94,7 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 
 		List<Integer> slots = new ArrayList<>(guiIngredients.keySet());
 		Collections.sort(slots);
+		Set<Integer> inputSlots = this.slots.get(RecipeIngredientRole.INPUT);
 		for (Integer slot : slots) {
 			if (inputSlots.contains(slot)) {
 				if (inputIndex < inputs.size()) {
@@ -115,8 +126,8 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 		}
 		GuiIngredient<T> guiIngredient = guiIngredients.get(slotIndex);
 
-		IFocus.Mode ingredientMode = guiIngredient.isInput() ? IFocus.Mode.INPUT : IFocus.Mode.OUTPUT;
-		if (focus == null || focus.getMode() == ingredientMode) {
+		RecipeIngredientRole focusType = guiIngredient.getRecipeIngredientType();
+		if (focus == null || focus.getRole() == focusType) {
 			guiIngredient.set(ingredients, focus);
 		} else {
 			guiIngredient.set(ingredients, null);
@@ -135,8 +146,20 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 	}
 
 	@Override
+	@Deprecated
 	public void addTooltipCallback(ITooltipCallback<T> tooltipCallback) {
-		ErrorUtil.checkNotNull(tooltipCallbacks, "tooltipCallback");
+		ErrorUtil.checkNotNull(tooltipCallback, "tooltipCallback");
+		this.tooltipCallbacks.add((guiIngredient, tooltip) -> {
+			T displayedIngredient = guiIngredient.getDisplayedIngredient();
+			if (displayedIngredient != null) {
+				tooltipCallback.onTooltip(guiIngredient.getSlotIndex(), guiIngredient.isInput(), displayedIngredient, tooltip);
+			}
+		});
+	}
+
+	@Override
+	public void addTooltipCallback(IGuiIngredientTooltipCallback<T> tooltipCallback) {
+		ErrorUtil.checkNotNull(tooltipCallback, "tooltipCallback");
 		this.tooltipCallbacks.add(tooltipCallback);
 	}
 
@@ -166,12 +189,16 @@ public class GuiIngredientGroup<T> implements IGuiIngredientGroup<T> {
 		if (focus == null) {
 			this.focus = null;
 		} else {
-			this.focus = Focus.check(focus);
+			this.focus = Focus.checkOne(focus);
 		}
 	}
 
 	public Set<Integer> getOutputSlots() {
-		return outputSlots;
+		Set<Integer> slotIndexes = slots.get(RecipeIngredientRole.OUTPUT);
+		if (slotIndexes == null) {
+			return Set.of();
+		}
+		return Collections.unmodifiableSet(slotIndexes);
 	}
 
 	public String getIngredientModId(T ingredient) {

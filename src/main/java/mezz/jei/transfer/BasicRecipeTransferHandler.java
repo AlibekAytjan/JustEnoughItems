@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
@@ -76,7 +77,7 @@ public class BasicRecipeTransferHandler<C extends AbstractContainerMenu, R> impl
 		int inputCount = 0;
 		IGuiItemStackGroup itemStackGroup = recipeLayout.getItemStacks();
 		for (IGuiIngredient<ItemStack> ingredient : itemStackGroup.getGuiIngredients().values()) {
-			if (ingredient.isInput() && !ingredient.getAllIngredients().isEmpty()) {
+			if (ingredient.getRecipeIngredientType() == RecipeIngredientRole.INPUT && !ingredient.getAllIngredients().isEmpty()) {
 				inputCount++;
 			}
 		}

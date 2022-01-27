@@ -10,6 +10,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import mezz.jei.api.ingredients.subtypes.UidContext;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -84,14 +85,18 @@ public final class RecipeTransferUtil {
 	 * Returns a list of items in slots that complete the recipe defined by requiredStacksList.
 	 * Returns a result that contains missingItems if there are not enough items in availableItemStacks.
 	 */
-	public static MatchingItemsResult getMatchingItems(IStackHelper stackhelper, Map<Integer, ItemStack> availableItemStacks, Map<Integer, ? extends IGuiIngredient<ItemStack>> ingredientsMap) {
+	public static MatchingItemsResult getMatchingItems(
+		IStackHelper stackhelper,
+		Map<Integer, ItemStack> availableItemStacks,
+		Map<Integer, ? extends IGuiIngredient<ItemStack>> ingredientsMap
+	) {
 		MatchingItemsResult matchingItemResult = new MatchingItemsResult();
 
 		int recipeSlotNumber = -1;
 		SortedSet<Integer> keys = new TreeSet<>(ingredientsMap.keySet());
 		for (Integer key : keys) {
 			IGuiIngredient<ItemStack> ingredient = ingredientsMap.get(key);
-			if (!ingredient.isInput()) {
+			if (ingredient.getRecipeIngredientType() != RecipeIngredientRole.INPUT) {
 				continue;
 			}
 			recipeSlotNumber++;

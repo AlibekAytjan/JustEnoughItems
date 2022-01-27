@@ -1,7 +1,10 @@
 package mezz.jei.plugins.vanilla.stonecutting;
 
 import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.ingredient.IGuiItemStackGroup;
+import mezz.jei.api.recipe.IFocus;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +19,9 @@ import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.config.Constants;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class StoneCuttingRecipeCategory implements IRecipeCategory<StonecutterRecipe> {
 	private static final int inputSlot = 0;
@@ -60,19 +66,28 @@ public class StoneCuttingRecipeCategory implements IRecipeCategory<StonecutterRe
 		return icon;
 	}
 
-	@Override
-	public void setIngredients(StonecutterRecipe recipe, IIngredients ingredients) {
-		ingredients.setInputIngredients(recipe.getIngredients());
-		ingredients.setOutput(VanillaTypes.ITEM, recipe.getResultItem());
-	}
+//	@Override
+//	public void setIngredients(StonecutterRecipe recipe, IIngredients ingredients) {
+//		ingredients.setInputIngredients(recipe.getIngredients());
+//		ingredients.setOutput(VanillaTypes.ITEM, recipe.getResultItem());
+//	}
+//
+//	@Override
+//	public void setRecipe(IRecipeLayout recipeLayout, StonecutterRecipe recipe, IIngredients ingredients) {
+//		IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
+//		guiItemStacks.init(inputSlot, true, 0, 8);
+//		guiItemStacks.init(outputSlot, false, 60, 8);
+//
+//		guiItemStacks.set(ingredients);
+//	}
 
 	@Override
-	public void setRecipe(IRecipeLayout recipeLayout, StonecutterRecipe recipe, IIngredients ingredients) {
-		IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
-		guiItemStacks.init(inputSlot, true, 0, 8);
-		guiItemStacks.init(outputSlot, false, 60, 8);
+	public void setRecipe(IRecipeLayoutBuilder builder, StonecutterRecipe recipe, List<? extends IFocus<?>> focuses) {
+		builder.addSlot(inputSlot, RecipeIngredientRole.INPUT, 0, 8)
+			.addIngredients(recipe.getIngredients().get(0));
 
-		guiItemStacks.set(ingredients);
+		builder.addSlot(outputSlot, RecipeIngredientRole.OUTPUT, 60,  8)
+			.addIngredient(recipe.getResultItem());
 	}
 
 	@Override

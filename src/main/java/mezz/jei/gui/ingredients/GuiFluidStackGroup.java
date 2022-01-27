@@ -7,12 +7,11 @@ import net.minecraftforge.fluids.FluidStack;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IGuiFluidStackGroup;
-import mezz.jei.gui.Focus;
 import mezz.jei.plugins.vanilla.ingredients.fluid.FluidStackRenderer;
 
 public class GuiFluidStackGroup extends GuiIngredientGroup<FluidStack> implements IGuiFluidStackGroup {
-	public GuiFluidStackGroup(@Nullable Focus<FluidStack> focus, int cycleOffset) {
-		super(VanillaTypes.FLUID, focus, cycleOffset);
+	public GuiFluidStackGroup(int cycleOffset) {
+		super(VanillaTypes.FLUID, cycleOffset);
 	}
 
 	@Override

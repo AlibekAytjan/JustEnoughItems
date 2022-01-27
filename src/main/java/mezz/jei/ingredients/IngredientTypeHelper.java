@@ -6,15 +6,24 @@ import mezz.jei.gui.ingredients.GuiIngredient;
 import mezz.jei.render.IngredientListElementRenderer;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Optional;
 
 public final class IngredientTypeHelper {
+	@Nullable
+	public static <V> Focus<V> findAndCheckedCast(List<Focus<?>> focuses, IIngredientType<V> ingredientType) {
+		for (Focus<?> focus : focuses) {
+			Focus<V> vFocus = checkedCast(focus, ingredientType);
+			if (vFocus != null) {
+				return vFocus;
+			}
+		}
+		return null;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Nullable
-	public static <V> Focus<V> checkedCast(@Nullable Focus<?> focus, IIngredientType<V> ingredientType) {
-		if (focus == null) {
-			return null;
-		}
+	public static <V> Focus<V> checkedCast(Focus<?> focus, IIngredientType<V> ingredientType) {
 		Class<? extends V> ingredientClass = ingredientType.getIngredientClass();
 		if (ingredientClass.isInstance(focus.getValue())) {
 			return (Focus<V>) focus;

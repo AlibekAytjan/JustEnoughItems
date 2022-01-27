@@ -5,13 +5,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.Internal;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IGuiIngredient;
-import mezz.jei.api.gui.ingredient.ITooltipCallback;
+import mezz.jei.api.gui.ingredient.IGuiIngredientTooltipCallback;
 import mezz.jei.api.helpers.IModIdHelper;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.subtypes.UidContext;
-import mezz.jei.api.recipe.IFocus;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.gui.Focus;
 import mezz.jei.gui.TooltipRenderer;
 import mezz.jei.ingredients.IngredientFilter;
@@ -37,12 +37,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
 
 public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final int slotIndex;
-	private final boolean input;
+	private final RecipeIngredientRole focusType;
 
 	private final Rect2i rect;
 	private final int xPadding;
@@ -53,7 +54,8 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 	private final List<T> allIngredients = new ArrayList<>(); // all ingredients, ignoring focus
 	private final IIngredientRenderer<T> ingredientRenderer;
 	private final IIngredientHelper<T> ingredientHelper;
-	private List<ITooltipCallback<T>> tooltipCallbacks = Collections.emptyList();
+	private List<IGuiIngredientTooltipCallback<T>> tooltipCallbacks = Collections.emptyList();
+
 	@Nullable
 	private IDrawable background;
 
@@ -61,7 +63,7 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 
 	public GuiIngredient(
 		int slotIndex,
-		boolean input,
+		RecipeIngredientRole focusType,
 		IIngredientRenderer<T> ingredientRenderer,
 		IIngredientHelper<T> ingredientHelper,
 		Rect2i rect,
@@ -72,7 +74,7 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 		this.ingredientHelper = ingredientHelper;
 
 		this.slotIndex = slotIndex;
-		this.input = input;
+		this.focusType = focusType;
 
 		this.rect = rect;
 		this.xPadding = xPadding;
@@ -107,6 +109,19 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 	@Override
 	public List<T> getAllIngredients() {
 		return allIngredients;
+	}
+
+	@Override
+	public OptionalInt getRecipeIngredientIndex() {
+		if (this.getRecipeIngredientType() == RecipeIngredientRole.INPUT) {
+			return OptionalInt.of(this.slotIndex);
+		}
+		return OptionalInt.empty();
+	}
+
+	@Override
+	public int getSlotIndex() {
+		return slotIndex;
 	}
 
 	public void set(@Nullable List<T> ingredients, @Nullable Focus<T> focus) {
@@ -154,14 +169,14 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 
 	@Nullable
 	private T getMatch(Collection<T> ingredients, @Nullable Focus<T> focus) {
-		if (focus != null && isMode(focus.getMode())) {
+		if (focus != null && isFocusType(focus.getRole())) {
 			T focusValue = focus.getValue();
 			return ingredientHelper.getMatch(ingredients, focusValue, UidContext.Ingredient);
 		}
 		return null;
 	}
 
-	public void setTooltipCallbacks(List<ITooltipCallback<T>> tooltipCallbacks) {
+	public void setTooltipCallbacks(List<IGuiIngredientTooltipCallback<T>> tooltipCallbacks) {
 		this.tooltipCallbacks = tooltipCallbacks;
 	}
 
@@ -213,8 +228,8 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 
 			IModIdHelper modIdHelper = Internal.getHelpers().getModIdHelper();
 			List<Component> tooltip = IngredientRenderHelper.getIngredientTooltipSafe(value, ingredientRenderer, ingredientHelper, modIdHelper);
-			for (ITooltipCallback<T> tooltipCallback : this.tooltipCallbacks) {
-				tooltipCallback.onTooltip(slotIndex, input, value, tooltip);
+			for (IGuiIngredientTooltipCallback<T> tooltipCallback : this.tooltipCallbacks) {
+				tooltipCallback.onTooltip(this, tooltip);
 			}
 
 			if (value instanceof ItemStack) {
@@ -256,10 +271,13 @@ public class GuiIngredient<T> extends GuiComponent implements IGuiIngredient<T> 
 
 	@Override
 	public boolean isInput() {
-		return input;
+		return switch (focusType) {
+			case INPUT, CATALYST -> true;
+			case OUTPUT -> false;
+		};
 	}
 
-	public boolean isMode(IFocus.Mode mode) {
-		return (input && mode == IFocus.Mode.INPUT) || (!input && mode == IFocus.Mode.OUTPUT);
+	public boolean isFocusType(RecipeIngredientRole type) {
+		return this.focusType == type;
 	}
 }

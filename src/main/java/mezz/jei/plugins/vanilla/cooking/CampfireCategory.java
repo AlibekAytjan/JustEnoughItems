@@ -1,7 +1,10 @@
 package mezz.jei.plugins.vanilla.cooking;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawableAnimated;
+import mezz.jei.api.recipe.IFocus;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.item.crafting.CampfireCookingRecipe;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +16,9 @@ import mezz.jei.api.gui.ingredient.IGuiItemStackGroup;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.config.Constants;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class CampfireCategory extends AbstractCookingCategory<CampfireCookingRecipe> {
 	private final IDrawable background;
@@ -47,13 +53,22 @@ public class CampfireCategory extends AbstractCookingCategory<CampfireCookingRec
 		drawCookTime(recipe, poseStack, 35);
 	}
 
+//	@Override
+//	public void setRecipe(IRecipeLayout recipeLayout, CampfireCookingRecipe recipe, IIngredients ingredients) {
+//		IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
+//
+//		guiItemStacks.init(inputSlot, true, 0, 0);
+//		guiItemStacks.init(outputSlot, false, 60, 8);
+//
+//		guiItemStacks.set(ingredients);
+//	}
+
 	@Override
-	public void setRecipe(IRecipeLayout recipeLayout, CampfireCookingRecipe recipe, IIngredients ingredients) {
-		IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
+	public void setRecipe(IRecipeLayoutBuilder builder, CampfireCookingRecipe recipe, List<? extends IFocus<?>> focuses) {
+		builder.addSlot(inputSlot, RecipeIngredientRole.INPUT, 0, 0)
+			.addIngredients(recipe.getIngredients().get(0));
 
-		guiItemStacks.init(inputSlot, true, 0, 0);
-		guiItemStacks.init(outputSlot, false, 60, 8);
-
-		guiItemStacks.set(ingredients);
+		builder.addSlot(outputSlot, RecipeIngredientRole.OUTPUT, 60, 8)
+			.addIngredient(recipe.getResultItem());
 	}
 }

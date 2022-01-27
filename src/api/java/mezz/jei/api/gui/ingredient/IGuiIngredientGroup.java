@@ -12,6 +12,7 @@ import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.IIngredients;
 import mezz.jei.api.recipe.IFocus;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.registration.IModIngredientRegistration;
 
@@ -51,8 +52,16 @@ public interface IGuiIngredientGroup<T> {
 
 	/**
 	 * Add a callback to alter the tooltip for these ingredients.
+	 * @deprecated since JEI 9.3.0. Use {@link #addTooltipCallback(IGuiIngredientTooltipCallback)} instead.
 	 */
+	@Deprecated
 	void addTooltipCallback(ITooltipCallback<T> tooltipCallback);
+
+	/**
+	 * Add a callback to alter the tooltip for these ingredients.
+	 * @since JEI 9.3.0
+	 */
+	void addTooltipCallback(IGuiIngredientTooltipCallback<T> tooltipCallback);
 
 	/**
 	 * Get the ingredients after they have been set.
@@ -77,6 +86,9 @@ public interface IGuiIngredientGroup<T> {
 	 * @see IGuiFluidStackGroup#init(int, boolean, int, int, int, int, int, boolean, IDrawable)
 	 */
 	void init(int slotIndex, boolean input, int xPosition, int yPosition);
+	default void init(int slotIndex, RecipeIngredientRole role, int xPosition, int yPosition) {
+		init(slotIndex, role != RecipeIngredientRole.OUTPUT, xPosition, yPosition);
+	}
 
 	/**
 	 * Initialize a custom guiIngredient for the given slot.
@@ -101,8 +113,15 @@ public interface IGuiIngredientGroup<T> {
 			  int xPosition, int yPosition,
 			  int width, int height,
 			  int xPadding, int yPadding);
+	default void init(int slotIndex, RecipeIngredientRole role,
+					  IIngredientRenderer<T> ingredientRenderer,
+					  int xPosition, int yPosition,
+					  int width, int height,
+					  int xPadding, int yPadding) {
+		init(slotIndex, role != RecipeIngredientRole.OUTPUT, ingredientRenderer, xPosition, yPosition, width, height, xPadding, yPadding);
+	}
 
-	/*
+	/**
 	 * Force this ingredient group to display a different focus.
 	 * This must be set before any ingredients are set.
 	 *

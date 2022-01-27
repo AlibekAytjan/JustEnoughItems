@@ -14,12 +14,12 @@ public class RecipeCategoryDataMap {
 
 	public RecipeCategoryDataMap(
 		List<IRecipeCategory<?>> recipeCategories,
-		ImmutableListMultimap<IRecipeCategory<?>, Object> recipeCatalystsMap
+		ImmutableListMultimap<IRecipeCategory<?>, Object> recipeCategoryCatalystsMap
 	) {
 		ImmutableMap.Builder<ResourceLocation, RecipeCategoryData<?>> mapBuilder = ImmutableMap.builder();
 		for (IRecipeCategory<?> recipeCategory : recipeCategories) {
-			ImmutableList<Object> recipeCatalysts = recipeCatalystsMap.get(recipeCategory);
-			mapBuilder.put(recipeCategory.getUid(), new RecipeCategoryData<>(recipeCategory, recipeCatalysts));
+			ImmutableList<Object> recipeCategoryCatalysts = recipeCategoryCatalystsMap.get(recipeCategory);
+			mapBuilder.put(recipeCategory.getUid(), new RecipeCategoryData<>(recipeCategory, recipeCategoryCatalysts));
 		}
 		this.map = mapBuilder.build();
 	}

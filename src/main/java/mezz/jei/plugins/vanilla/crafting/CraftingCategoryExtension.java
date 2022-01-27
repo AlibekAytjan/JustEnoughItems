@@ -38,4 +38,20 @@ public class CraftingCategoryExtension<T extends CraftingRecipe> implements ICra
 		}
 		return null;
 	}
+
+	@Override
+	public int getWidth() {
+		if (recipe instanceof IShapedRecipe<?> shapedRecipe) {
+			return shapedRecipe.getRecipeWidth();
+		}
+		return 0;
+	}
+
+	@Override
+	public int getHeight() {
+		if (recipe instanceof IShapedRecipe<?> shapedRecipe) {
+			return shapedRecipe.getRecipeHeight();
+		}
+		return 0;
+	}
 }

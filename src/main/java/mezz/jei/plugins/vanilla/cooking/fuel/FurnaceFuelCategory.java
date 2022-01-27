@@ -1,6 +1,9 @@
 package mezz.jei.plugins.vanilla.cooking.fuel;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.recipe.IFocus;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.resources.ResourceLocation;
@@ -19,6 +22,8 @@ import mezz.jei.gui.textures.Textures;
 import mezz.jei.plugins.vanilla.cooking.FurnaceVariantCategory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
+
+import java.util.List;
 
 public class FurnaceFuelCategory extends FurnaceVariantCategory<FuelRecipe> {
 	private final IDrawableStatic background;
@@ -67,17 +72,24 @@ public class FurnaceFuelCategory extends FurnaceVariantCategory<FuelRecipe> {
 		return flameTransparentBackground;
 	}
 
-	@Override
-	public void setIngredients(FuelRecipe recipe, IIngredients ingredients) {
-		ingredients.setInputs(VanillaTypes.ITEM, recipe.getInputs());
-	}
+//	@Override
+//	public void setIngredients(FuelRecipe recipe, IIngredients ingredients) {
+//		ingredients.setInputs(VanillaTypes.ITEM, recipe.getInputs());
+//	}
+//
+//	@Override
+//	public void setRecipe(IRecipeLayout recipeLayout, FuelRecipe recipe, IIngredients ingredients) {
+//		IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
+//
+//		guiItemStacks.init(fuelSlot, true, 0, 16);
+//		guiItemStacks.set(ingredients);
+//	}
+
 
 	@Override
-	public void setRecipe(IRecipeLayout recipeLayout, FuelRecipe recipe, IIngredients ingredients) {
-		IGuiItemStackGroup guiItemStacks = recipeLayout.getItemStacks();
-
-		guiItemStacks.init(fuelSlot, true, 0, 16);
-		guiItemStacks.set(ingredients);
+	public void setRecipe(IRecipeLayoutBuilder builder, FuelRecipe recipe, List<? extends IFocus<?>> focuses) {
+		builder.addSlot(fuelSlot, RecipeIngredientRole.INPUT, 0, 16)
+			.addIngredients(recipe.getInputs());
 	}
 
 	@Override

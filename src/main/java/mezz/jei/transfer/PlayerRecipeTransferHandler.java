@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
@@ -86,7 +87,7 @@ public class PlayerRecipeTransferHandler implements IRecipeTransferHandler<Inven
 
 			int inputIndex = 0;
 			for (IGuiIngredient<ItemStack> ingredient : itemStackGroup.getGuiIngredients().values()) {
-				if (ingredient.isInput()) {
+				if (ingredient.getRecipeIngredientType() == RecipeIngredientRole.INPUT) {
 					if (!ingredient.getAllIngredients().isEmpty()) {
 						inputCount++;
 						if (badIndexes.contains(inputIndex)) {
@@ -102,11 +103,11 @@ public class PlayerRecipeTransferHandler implements IRecipeTransferHandler<Inven
 		// compact the crafting grid into a 2x2 area
 		List<IGuiIngredient<ItemStack>> guiIngredients = new ArrayList<>();
 		for (IGuiIngredient<ItemStack> guiIngredient : itemStackGroup.getGuiIngredients().values()) {
-			if (guiIngredient.isInput()) {
+			if (guiIngredient.getRecipeIngredientType() == RecipeIngredientRole.INPUT) {
 				guiIngredients.add(guiIngredient);
 			}
 		}
-		IGuiItemStackGroup playerInvItemStackGroup = new GuiItemStackGroup(null, 0);
+		IGuiItemStackGroup playerInvItemStackGroup = new GuiItemStackGroup( 0);
 		int[] playerGridIndexes = {0, 1, 3, 4};
 		for (int i = 0; i < 4; i++) {
 			int index = playerGridIndexes[i];

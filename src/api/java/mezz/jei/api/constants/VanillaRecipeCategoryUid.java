@@ -28,7 +28,8 @@ public final class VanillaRecipeCategoryUid {
 	 *
 	 * Automatically includes all vanilla and Forge recipes.
 	 *
-	 * To add a shaped recipe extension to this category, it must implement {@link ICraftingCategoryExtension#getSize()}.
+	 * To add a shaped recipe extension to this category, it must implement
+	 * {@link ICraftingCategoryExtension#getWidth()} and {@link ICraftingCategoryExtension#getHeight()}.
 	 *
 	 * To override the normal behavior of the crafting recipe category, you can implement {@link ICustomCraftingCategoryExtension}
 	 */

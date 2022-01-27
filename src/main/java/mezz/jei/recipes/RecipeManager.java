@@ -5,6 +5,7 @@ import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.helpers.IModIdHelper;
 import mezz.jei.api.recipe.IFocus;
 import mezz.jei.api.recipe.IRecipeManager;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.gui.Focus;
 import mezz.jei.gui.recipes.RecipeLayout;
@@ -14,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class RecipeManager implements IRecipeManager {
@@ -26,8 +28,8 @@ public class RecipeManager implements IRecipeManager {
 	}
 
 	@Override
-	public <V> IFocus<V> createFocus(IFocus.Mode mode, V ingredient) {
-		return new Focus<>(mode, ingredient);
+	public <V> IFocus<V> createFocus(RecipeIngredientRole role, V ingredient) {
+		return new Focus<>(role, ingredient);
 	}
 
 	@Override
@@ -44,7 +46,7 @@ public class RecipeManager implements IRecipeManager {
 	@Nullable
 	public IRecipeCategory<?> getRecipeCategory(ResourceLocation recipeCategoryUid, boolean includeHidden) {
 		ErrorUtil.checkNotNull(recipeCategoryUid, "recipeCategoryUid");
-		return internal.getRecipeCategoriesStream(List.of(recipeCategoryUid), null, includeHidden)
+		return internal.getRecipeCategoriesStream(List.of(recipeCategoryUid), List.of(), includeHidden)
 			.findFirst()
 			.orElse(null);
 	}
@@ -52,14 +54,21 @@ public class RecipeManager implements IRecipeManager {
 	@Override
 	public <V> List<IRecipeCategory<?>> getRecipeCategories(Collection<ResourceLocation> recipeCategoryUids, @Nullable IFocus<V> focus, boolean includeHidden) {
 		ErrorUtil.checkNotNull(recipeCategoryUids, "recipeCategoryUids");
-		Focus<V> internalFocus = Focus.checkNullable(focus);
+		List<Focus<?>> internalFocus = Focus.checkNullable(focus);
 		return internal.getRecipeCategoriesStream(recipeCategoryUids, internalFocus, includeHidden)
 			.collect(Collectors.toList());
 	}
 
 	@Override
 	public <V> List<IRecipeCategory<?>> getRecipeCategories(@Nullable IFocus<V> focus, boolean includeHidden) {
-		Focus<V> internalFocus = Focus.checkNullable(focus);
+		List<Focus<?>> internalFocus = Focus.checkNullable(focus);
+		return internal.getRecipeCategoriesStream(null, internalFocus, includeHidden)
+			.collect(Collectors.toList());
+	}
+
+	@Override
+	public List<IRecipeCategory<?>> getRecipeCategories(Collection<? extends IFocus<?>> focus, boolean includeHidden) {
+		List<Focus<?>> internalFocus = Focus.check(focus);
 		return internal.getRecipeCategoriesStream(null, internalFocus, includeHidden)
 			.collect(Collectors.toList());
 	}
@@ -67,7 +76,15 @@ public class RecipeManager implements IRecipeManager {
 	@Override
 	public <T, V> List<T> getRecipes(IRecipeCategory<T> recipeCategory, @Nullable IFocus<V> focus, boolean includeHidden) {
 		ErrorUtil.checkNotNull(recipeCategory, "recipeCategory");
-		Focus<V> internalFocus = Focus.checkNullable(focus);
+		List<Focus<?>> internalFocus = Focus.checkNullable(focus);
+		return internal.getRecipesStream(recipeCategory, internalFocus, includeHidden)
+			.collect(Collectors.toList());
+	}
+
+	@Override
+	public <T> List<T> getRecipes(IRecipeCategory<T> recipeCategory, List<? extends IFocus<?>> focuses, boolean includeHidden) {
+		ErrorUtil.checkNotNull(recipeCategory, "recipeCategory");
+		List<Focus<?>> internalFocus = Focus.check(focuses);
 		return internal.getRecipesStream(recipeCategory, internalFocus, includeHidden)
 			.collect(Collectors.toList());
 	}
@@ -80,10 +97,10 @@ public class RecipeManager implements IRecipeManager {
 
 	@Override
 	public <T> IRecipeLayoutDrawable createRecipeLayoutDrawable(IRecipeCategory<T> recipeCategory, T recipe, IFocus<?> focus) {
-		Focus<?> checkedFocus = Focus.check(focus);
-		RecipeLayout<?> recipeLayout = RecipeLayout.create(-1, recipeCategory, recipe, checkedFocus, modIdHelper, 0, 0);
-		Preconditions.checkNotNull(recipeLayout, "Recipe layout crashed during creation, see log.");
-		return recipeLayout;
+		List<Focus<?>> checkedFocus = Focus.check(focus);
+		Optional<RecipeLayout<T>> recipeLayout = RecipeLayout.create(-1, recipeCategory, recipe, checkedFocus, modIdHelper, 0, 0);
+		Preconditions.checkArgument(recipeLayout.isPresent(), "Recipe layout crashed during creation, see log.");
+		return recipeLayout.get();
 	}
 
 	@Override

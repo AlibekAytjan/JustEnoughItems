@@ -10,7 +10,10 @@ import mezz.jei.api.recipe.category.extensions.IRecipeCategoryExtension;
 /**
  * This interface allows recipes to override the default behavior in the
  * {@link VanillaRecipeCategoryUid#CRAFTING} recipe category.
+ *
+ * @deprecated since JEI 9.3.0. This interface creates a lot of complexity and is no longer supported.
  */
+@Deprecated
 public interface ICustomCraftingCategoryExtension extends ICraftingCategoryExtension {
 	/**
 	 * This is called to override the vanilla crafting category's
@@ -22,6 +25,9 @@ public interface ICustomCraftingCategoryExtension extends ICraftingCategoryExten
 	 *
 	 * @param recipeLayout the layout that needs its properties set.
 	 * @param ingredients  the ingredients, already set by the recipeWrapper
+	 *
+	 * @deprecated since JEI 9.3.0. This interface creates a lot of complexity and is no longer supported.
 	 */
+	@Deprecated
 	void setRecipe(IRecipeLayout recipeLayout, IIngredients ingredients);
 }

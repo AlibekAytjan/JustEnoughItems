@@ -10,6 +10,7 @@ import mezz.jei.api.gui.ingredient.IGuiFluidStackGroup;
 import mezz.jei.api.helpers.IModIdHelper;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.IIngredients;
+import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.gui.Focus;
 import mezz.jei.gui.TooltipRenderer;
@@ -57,8 +58,7 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 	@Nullable
 	private final RecipeTransferButton recipeTransferButton;
 	private final R recipe;
-	@Nullable
-	private final Focus<?> focus;
+	private final List<Focus<?>> focuses;
 	@Nullable
 	private ShapelessIcon shapelessIcon;
 	private final DrawableNineSliceTexture recipeBorder;
@@ -66,24 +66,46 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 	private int posX;
 	private int posY;
 
-	@Nullable
-	public static <T> RecipeLayout<T> create(int index, IRecipeCategory<T> recipeCategory, T recipe, @Nullable Focus<?> focus, IModIdHelper modIdHelper, int posX, int posY) {
-		RecipeLayout<T> recipeLayout = new RecipeLayout<>(index, recipeCategory, recipe, focus, posX, posY);
+	public static <T> Optional<RecipeLayout<T>> create(int index, IRecipeCategory<T> recipeCategory, T recipe, List<Focus<?>> focuses, IModIdHelper modIdHelper, int posX, int posY) {
+		return createNew(index, recipeCategory, recipe, focuses, posX, posY)
+			.or(() -> createOld(index, recipeCategory, recipe, focuses, posX, posY))
+			.map(recipeLayout -> {
+				if (recipe instanceof Recipe) {
+					addOutputSlotTooltip(recipeLayout, (Recipe<?>) recipe, modIdHelper);
+				}
+				return recipeLayout;
+			});
+	}
+
+	public static <T> Optional<RecipeLayout<T>> createNew(int index, IRecipeCategory<T> recipeCategory, T recipe, List<Focus<?>> focuses, int posX, int posY) {
+		RecipeLayoutBuilder builder = new RecipeLayoutBuilder();
+		try {
+			recipeCategory.setRecipe(builder, recipe, focuses);
+			if (builder.isUsed()) {
+				RecipeLayout<T> recipeLayout = builder.buildRecipeLayout(index, recipeCategory, recipe, focuses, posX, posY);
+				return Optional.of(recipeLayout);
+			}
+		} catch (RuntimeException | LinkageError e) {
+			LOGGER.error("Error caught from Recipe Category: {}", recipeCategory.getUid(), e);
+		}
+		return Optional.empty();
+	}
+
+	@SuppressWarnings("deprecation")
+	public static <T> Optional<RecipeLayout<T>> createOld(int index, IRecipeCategory<T> recipeCategory, T recipe, List<Focus<?>> focuses, int posX, int posY) {
+		RecipeLayout<T> recipeLayout = new RecipeLayout<>(index, recipeCategory, recipe, focuses, posX, posY);
 		try {
 			IIngredients ingredients = new Ingredients();
 			recipeCategory.setIngredients(recipe, ingredients);
 			recipeCategory.setRecipe(recipeLayout, recipe, ingredients);
-			if (recipe instanceof Recipe) {
-				addOutputSlotTooltip(recipeLayout, (Recipe<?>) recipe, modIdHelper);
-			}
-			return recipeLayout;
+			return Optional.of(recipeLayout);
 		} catch (RuntimeException | LinkageError e) {
-			LOGGER.error("Error caught from Recipe Category: {}", recipeCategory.getClass().getCanonicalName(), e);
+			LOGGER.error("Error caught from Recipe Category: {}", recipeCategory.getUid(), e);
 		}
-		return null;
+		return Optional.empty();
 	}
 
-	private static void addOutputSlotTooltip(RecipeLayout<?> recipeLayout, Recipe<?> recipe, IModIdHelper modIdHelper) {
+	public static void addOutputSlotTooltip(RecipeLayout<?> recipeLayout, Recipe<?> recipe, IModIdHelper modIdHelper) {
 		ResourceLocation recipeName = recipe.getId();
 		for (GuiIngredientGroup<?> ingredientGroup : recipeLayout.guiIngredientGroups.values()) {
 			addOutputSlotTooltip(ingredientGroup, recipeName, modIdHelper);
@@ -91,11 +113,15 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 	}
 
 	private static <T> void addOutputSlotTooltip(GuiIngredientGroup<T> guiIngredientGroup, ResourceLocation recipeName, IModIdHelper modIdHelper) {
-		guiIngredientGroup.addTooltipCallback((slotIndex, input, ingredient, tooltip) -> {
-			if (guiIngredientGroup.getOutputSlots().contains(slotIndex)) {
+		guiIngredientGroup.addTooltipCallback((guiIngredient, tooltip) -> {
+			T displayedIngredient = guiIngredient.getDisplayedIngredient();
+			if (displayedIngredient == null) {
+				return;
+			}
+			if (guiIngredient.getRecipeIngredientType() == RecipeIngredientRole.OUTPUT) {
 				if (modIdHelper.isDisplayingModNameEnabled()) {
 					String recipeModId = recipeName.getNamespace();
-					String ingredientModId = guiIngredientGroup.getIngredientModId(ingredient);
+					String ingredientModId = guiIngredientGroup.getIngredientModId(displayedIngredient);
 					if (!recipeModId.equals(ingredientModId)) {
 						String modName = modIdHelper.getFormattedModNameForModId(recipeModId);
 						TranslatableComponent recipeBy = new TranslatableComponent("jei.tooltip.recipe.by", modName);
@@ -111,16 +137,19 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 		});
 	}
 
-	private RecipeLayout(int index, IRecipeCategory<R> recipeCategory, R recipe, @Nullable Focus<?> focus, int posX, int posY) {
+	public RecipeLayout(int index, IRecipeCategory<R> recipeCategory, R recipe, List<Focus<?>> focuses, int posX, int posY) {
 		ErrorUtil.checkNotNull(recipeCategory, "recipeCategory");
 		ErrorUtil.checkNotNull(recipe, "recipe");
 		this.recipeCategory = recipeCategory;
-		this.focus = focus;
+		this.focuses = focuses;
 
-		Focus<ItemStack> itemStackFocus = IngredientTypeHelper.checkedCast(focus, VanillaTypes.ITEM);
-		Focus<FluidStack> fluidStackFocus = IngredientTypeHelper.checkedCast(focus, VanillaTypes.FLUID);
-		this.guiItemStackGroup = new GuiItemStackGroup(itemStackFocus, ingredientCycleOffset);
-		this.guiFluidStackGroup = new GuiFluidStackGroup(fluidStackFocus, ingredientCycleOffset);
+		Focus<ItemStack> itemStackFocus = IngredientTypeHelper.findAndCheckedCast(focuses, VanillaTypes.ITEM);
+		this.guiItemStackGroup = new GuiItemStackGroup(ingredientCycleOffset);
+		this.guiItemStackGroup.setOverrideDisplayFocus(itemStackFocus);
+
+		Focus<FluidStack> fluidStackFocus = IngredientTypeHelper.findAndCheckedCast(focuses, VanillaTypes.FLUID);
+		this.guiFluidStackGroup = new GuiFluidStackGroup(ingredientCycleOffset);
+		this.guiFluidStackGroup.setOverrideDisplayFocus(fluidStackFocus);
 
 		this.guiIngredientGroups = new IdentityHashMap<>();
 		this.guiIngredientGroups.put(VanillaTypes.ITEM, this.guiItemStackGroup);
@@ -169,7 +198,7 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 			int height = categoryBackground.getHeight() + (2 * RECIPE_BORDER_PADDING);
 			recipeBorder.draw(poseStack, -RECIPE_BORDER_PADDING, -RECIPE_BORDER_PADDING, width, height);
 			background.draw(poseStack);
-			recipeCategory.draw(recipe, poseStack, recipeMouseX, recipeMouseY);
+			recipeCategory.draw(recipe, this, poseStack, recipeMouseX, recipeMouseY);
 			// drawExtras and drawInfo often render text which messes with the color, this clears it
 			RenderSystem.setShaderColor(1, 1, 1, 1);
 			if (shapelessIcon != null) {
@@ -265,7 +294,8 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 		GuiIngredientGroup<V> guiIngredientGroup = (GuiIngredientGroup<V>) guiIngredientGroups.get(ingredientType);
 		if (guiIngredientGroup == null) {
 			Focus<V> focus = getFocus(ingredientType);
-			guiIngredientGroup = new GuiIngredientGroup<>(ingredientType, focus, ingredientCycleOffset);
+			guiIngredientGroup = new GuiIngredientGroup<>(ingredientType, ingredientCycleOffset);
+			guiIngredientGroup.setOverrideDisplayFocus(focus);
 			guiIngredientGroups.put(ingredientType, guiIngredientGroup);
 		}
 		return guiIngredientGroup;
@@ -287,7 +317,7 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable {
 	@Nullable
 	@Override
 	public <V> Focus<V> getFocus(IIngredientType<V> ingredientType) {
-		return IngredientTypeHelper.checkedCast(this.focus, ingredientType);
+		return IngredientTypeHelper.findAndCheckedCast(this.focuses, ingredientType);
 	}
 
 	@Nullable

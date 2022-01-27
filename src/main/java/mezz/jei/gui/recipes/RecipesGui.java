@@ -423,8 +423,16 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 
 	@Override
 	public <V> void show(IFocus<V> focus) {
-		Focus<V> checkedFocus = Focus.check(focus);
-		if (logic.setFocus(checkedFocus)) {
+		List<Focus<?>> checkedFocuses = Focus.check(focus);
+		if (logic.setFocus(checkedFocuses)) {
+			open();
+		}
+	}
+
+	@Override
+	public void show(List<? extends IFocus<?>> focuses) {
+		List<Focus<?>> checkedFocuses = Focus.check(focuses);
+		if (logic.setFocus(checkedFocuses)) {
 			open();
 		}
 	}

@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import javax.annotation.Nonnegative;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Stack;
 
 public class RecipeGuiLogic implements IRecipeGuiLogic {
@@ -34,12 +35,12 @@ public class RecipeGuiLogic implements IRecipeGuiLogic {
 		this.recipeTransferManager = recipeTransferManager;
 		this.stateListener = stateListener;
 		this.modIdHelper = modIdHelper;
-		this.state = IngredientLookupState.createWithFocus(recipeManager, null);
+		this.state = IngredientLookupState.createWithFocus(recipeManager, List.of());
 	}
 
 	@Override
-	public <V> boolean setFocus(Focus<V> focus) {
-		IngredientLookupState state = IngredientLookupState.createWithFocus(recipeManager, focus);
+	public boolean setFocus(List<Focus<?>> focuses) {
+		IngredientLookupState state = IngredientLookupState.createWithFocus(recipeManager, focuses);
 		ImmutableList<IRecipeCategory<?>> recipeCategories = state.getRecipeCategories();
 		if (recipeCategories.isEmpty()) {
 			return false;
@@ -59,6 +60,7 @@ public class RecipeGuiLogic implements IRecipeGuiLogic {
 		LocalPlayer player = minecraft.player;
 		if (player != null) {
 			AbstractContainerMenu openContainer = player.containerMenu;
+			//noinspection ConstantConditions
 			if (openContainer != null) {
 				for (int i = 0; i < recipeCategories.size(); i++) {
 					IRecipeCategory<?> recipeCategory = recipeCategories.get(i);
@@ -102,7 +104,7 @@ public class RecipeGuiLogic implements IRecipeGuiLogic {
 	public boolean setCategoryFocus() {
 		IRecipeCategory<?> recipeCategory = getSelectedRecipeCategory();
 
-		final IngredientLookupState state = IngredientLookupState.createWithFocus(recipeManager, null);
+		final IngredientLookupState state = IngredientLookupState.createWithFocus(recipeManager, List.of());
 		state.setRecipeCategory(recipeCategory);
 		setState(state, true);
 
@@ -166,13 +168,14 @@ public class RecipeGuiLogic implements IRecipeGuiLogic {
 		final int firstRecipeIndex = state.getRecipeIndex() - (state.getRecipeIndex() % state.getRecipesPerPage());
 		for (int recipeIndex = firstRecipeIndex; recipeIndex < recipes.size() && recipeLayouts.size() < state.getRecipesPerPage(); recipeIndex++) {
 			T recipe = recipes.get(recipeIndex);
-			RecipeLayout<T> recipeLayout = RecipeLayout.create(recipeWidgetIndex++, recipeCategory, recipe, state.getFocus(), modIdHelper, posX, recipePosY);
-			if (recipeLayout == null) {
+			int index = recipeWidgetIndex++;
+			Optional<RecipeLayout<T>> recipeLayout = RecipeLayout.create(index, recipeCategory, recipe, state.getFocuses(), modIdHelper, posX, recipePosY);
+			if (recipeLayout.isEmpty()) {
 				recipes.remove(recipeIndex);
 				recipeManager.hideRecipe(recipe, recipeCategory.getUid());
 				recipeIndex--;
 			} else {
-				recipeLayouts.add(recipeLayout);
+				recipeLayouts.add(recipeLayout.get());
 				recipePosY += spacingY;
 			}
 		}
@@ -252,7 +255,7 @@ public class RecipeGuiLogic implements IRecipeGuiLogic {
 
 	@Override
 	public boolean hasAllCategories() {
-		return state.getRecipeCategories().size() == recipeManager.getRecipeCategories(null, false).size();
+		return state.getRecipeCategories().size() == recipeManager.getRecipeCategories(List.of(), false).size();
 	}
 
 }

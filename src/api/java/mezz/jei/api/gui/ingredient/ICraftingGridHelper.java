@@ -21,4 +21,6 @@ public interface ICraftingGridHelper {
 	 */
 	<T> void setInputs(IGuiIngredientGroup<T> ingredientGroup, List<List<T>> inputs, int width, int height);
 
+	int getShapelessSize(int total);
+	int getCraftingIndex(int i, int width, int height);
 }

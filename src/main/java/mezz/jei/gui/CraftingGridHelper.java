@@ -14,15 +14,9 @@ public class CraftingGridHelper implements ICraftingGridHelper {
 
 	@Override
 	public <T> void setInputs(IGuiIngredientGroup<T> ingredientGroup, List<List<T>> inputs) {
-		int width, height;
-		if (inputs.size() > 4) {
-			width = height = 3;
-		} else if (inputs.size() > 1) {
-			width = height = 2;
-		} else {
-			width = height = 1;
-		}
-
+		int width;
+		int height;
+		width = height = getShapelessSize(inputs.size());
 		setInputs(ingredientGroup, inputs, width, height);
 	}
 
@@ -40,7 +34,19 @@ public class CraftingGridHelper implements ICraftingGridHelper {
 		guiIngredients.set(craftInputSlot1 + inputIndex, input);
 	}
 
-	private static int getCraftingIndex(int i, int width, int height) {
+	@Override
+	public int getShapelessSize(int total) {
+		if (total > 4) {
+			return 3;
+		} else if (total > 1) {
+			return 2;
+		} else {
+			return 1;
+		}
+	}
+
+	@Override
+	public int getCraftingIndex(int i, int width, int height) {
 		int index;
 		if (width == 1) {
 			if (height == 3) {
